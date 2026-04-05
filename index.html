@@ -30,6 +30,7 @@
         .btn { padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; font-size: 18px; }
         .btn-danger { background: var(--danger); color: white; font-size: 14px; }
+        .btn-edit { background: #95a5a6; color: white; padding: 8px 12px; font-size: 12px; margin-left: 10px; vertical-align: middle; }
         
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 90%; max-width: 650px; padding: 25px; border-radius: 12px; position: relative; max-height: 85vh; overflow-y: auto; }
@@ -77,7 +78,10 @@
 
     <div id="main">
         <div id="clientView" style="display:none;">
-            <h1 id="activeTitle" style="text-align:center;">Client</h1>
+            <div style="text-align:center; margin-bottom: 20px;">
+                <h1 id="activeTitle" style="display:inline-block; margin:0;">Client</h1>
+                <button class="btn btn-edit" onclick="editClientName()">EDIT NAME</button>
+            </div>
             
             <div class="map-section">
                 <div class="map-grid">
@@ -188,10 +192,34 @@
                 const div = document.createElement('div');
                 div.className = `client-item ${currentId === c.id ? 'active-client' : ''}`;
                 div.innerText = c.name;
-                div.onclick = () => { currentId = c.id; document.getElementById('clientView').style.display='block'; document.getElementById('deleteBtn').style.display='block'; document.getElementById('activeTitle').innerText=c.name; renderList(); renderNotes(); };
+                div.onclick = () => { 
+                    currentId = c.id; 
+                    document.getElementById('clientView').style.display='block'; 
+                    document.getElementById('deleteBtn').style.display='block'; 
+                    document.getElementById('activeTitle').innerText=c.name; 
+                    renderList(); renderNotes(); 
+                };
                 list.appendChild(div);
             });
         };
+    }
+
+    function editClientName() {
+        const currentName = document.getElementById('activeTitle').innerText;
+        const newName = prompt("Enter new name for this client:", currentName);
+        if (newName && newName !== currentName) {
+            const tx = db.transaction("clients", "readwrite");
+            const store = tx.objectStore("clients");
+            store.get(currentId).onsuccess = e => {
+                const data = e.target.result;
+                data.name = newName;
+                store.put(data);
+            };
+            tx.oncomplete = () => {
+                document.getElementById('activeTitle').innerText = newName;
+                renderList();
+            };
+        }
     }
 
     function saveNote() {
