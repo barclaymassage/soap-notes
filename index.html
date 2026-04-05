@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Knead Clay Clinical Manager</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --success: #27ae60; --danger: #e74c3c; }
@@ -158,6 +160,23 @@
 </div>
 
 <script>
+    // --- OFFLINE SERVICE WORKER ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const blob = new Blob([`
+                const cacheName = 'knead-clay-v1';
+                self.addEventListener('install', e => {
+                    e.waitUntil(caches.open(cacheName).then(cache => cache.addAll(['./'])));
+                });
+                self.addEventListener('fetch', e => {
+                    e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+                });
+            `], { type: 'text/javascript' });
+            const workerUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(workerUrl);
+        });
+    }
+
     let db, currentId = null, editingNoteId = null;
 
     function checkPin() {
@@ -206,7 +225,7 @@
 
     function editClientName() {
         const currentName = document.getElementById('activeTitle').innerText;
-        const newName = prompt("Enter new name for this client:", currentName);
+        const newName = prompt("Enter new name:", currentName);
         if (newName && newName !== currentName) {
             const tx = db.transaction("clients", "readwrite");
             const store = tx.objectStore("clients");
@@ -251,7 +270,7 @@
     function openModal(noteJson) {
         const n = JSON.parse(decodeURIComponent(noteJson));
         editingNoteId = n.id;
-        document.getElementById('modalTitle').innerText = `Update: ${n.date}`;
+        document.getElementById('modalTitle').innerText = `Session: ${n.date}`;
         document.getElementById('modalBody').innerHTML = `
             <label>S</label><textarea id="editS">${n.s}</textarea>
             <label>O</label><textarea id="editO">${n.o}</textarea>
@@ -278,7 +297,7 @@
     }
 
     function deleteNote(id) {
-        if(confirm("Erase this session?")) {
+        if(confirm("Erase session history?")) {
             const tx = db.transaction("notes", "readwrite");
             tx.objectStore("notes").delete(id);
             tx.oncomplete = () => { closeModal(); renderNotes(); };
