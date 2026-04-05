@@ -17,7 +17,10 @@
         #clientList { overflow-y: auto; flex-grow: 1; }
         .client-item { padding: 15px; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
         .active-client { background: var(--accent) !important; color: white; font-weight: bold; }
-        #main { flex-grow: 1; padding: 25px; overflow-y: auto; }
+        
+        /* Main Area with Bottom Buffer */
+        #main { flex-grow: 1; padding: 25px; overflow-y: auto; background: var(--bg); padding-bottom: 150px; } /* Added 150px padding to clear the app bar */
+        
         .soap-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; }
         label { font-weight: bold; display: block; margin: 15px 0 5px; color: var(--primary); font-size: 0.85rem; }
         select, textarea, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; }
@@ -26,6 +29,7 @@
         .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; margin-top: 15px; font-size: 18px; }
         .history-item { background: #fff; border-left: 4px solid var(--accent); padding: 15px; margin-top: 15px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn-delete { color: var(--danger); background: #fff; border: 1px solid var(--danger); margin-top: 60px; font-size: 14px; width: 100%; max-width: 200px; }
     </style>
 </head>
 <body>
@@ -87,7 +91,10 @@
             </div>
 
             <div id="history"></div>
-            <button class="btn" style="color:var(--danger); background:none; margin-top:40px; font-size:12px;" onclick="deleteClient()">Delete Client File</button>
+            
+            <div style="text-align: center;">
+                <button class="btn btn-delete" onclick="deleteClient()">Delete Entire Client File</button>
+            </div>
         </div>
     </div>
 </div>
