@@ -32,7 +32,7 @@
 
 <div id="loginScreen">
     <h2>Clinic Access</h2>
-    <input type="password" id="pinField" style="padding:15px; text-align:center; font-size:24px; border-radius:8px;" placeholder="PIN" inputmode="numeric">
+    <input type="password" id="pinField" style="padding:15px; text-align:center; font-size:24px; border-radius:8px;" placeholder="PIN" inputmode="numeric" onkeydown="if(event.key==='Enter') checkPin()">
     <button class="btn" style="width:150px; margin-top:10px;" onclick="checkPin()">Unlock</button>
 </div>
 
