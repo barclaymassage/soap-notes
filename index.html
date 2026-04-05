@@ -12,42 +12,24 @@
         #sidebar { width: 320px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; height: 100vh; }
         #clientList { flex-grow: 1; overflow-y: auto; }
         .sidebar-footer { padding: 15px 15px 90px 15px; border-top: 1px solid #eee; background: #fafafa; }
-        
-        /* MAIN SCROLLING FIX */
         #main { flex-grow: 1; padding: 20px; overflow-y: auto; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; }
         
-        /* HISTORY BOX FIX */
-        #history { 
-            margin-top: 20px; 
-            border-top: 2px solid #ddd; 
-            padding-top: 10px; 
-            flex-grow: 1; 
-            overflow-y: auto; 
-            min-height: 200px; /* Ensures it always has a scrollable area */
-            padding-bottom: 50px; 
-        }
-
+        #history { margin-top: 20px; border-top: 2px solid #ddd; padding-top: 10px; flex-grow: 1; overflow-y: auto; min-height: 200px; padding-bottom: 50px; }
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 90%; max-width: 600px; padding: 25px; border-radius: 12px; position: relative; max-height: 80vh; overflow-y: auto; }
         .close-modal { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; color: var(--primary); }
-        
         .history-card { background: #fff; padding: 15px; border-left: 5px solid var(--accent); margin-top: 10px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
-        .history-card:active { background: #eef2f3; }
-
+        
         .map-section { background: #eaeff2; padding: 15px; border-radius: 12px; margin-bottom: 20px; max-width: 850px; width: 100%; align-self: center; }
         .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .zone-col { display: flex; flex-direction: column; gap: 6px; }
         .zone-btn { padding: 14px; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; color: var(--primary); }
-        .zone-btn:active { background: var(--accent); color: white; }
-        
         .soap-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 850px; width: 100%; align-self: center; }
         textarea { width: 100%; height: 90px; border-radius: 8px; border: 1px solid #ccc; padding: 10px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
         select { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 16px; }
-        
         .btn { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; font-size: 18px; }
         .btn-danger { background: var(--danger); color: white; width: 100%; font-size: 14px; margin-bottom: 10px; }
-        
         .client-item { padding: 20px; border-bottom: 1px solid #eee; cursor: pointer; }
         .active-client { background: var(--accent) !important; color: white; }
     </style>
@@ -61,6 +43,7 @@
         <br>
         <button type="button" id="unlockBtn" class="btn" style="width:220px; margin-top:15px; background: var(--accent); color: white;" onclick="checkPin()">UNLOCK</button>
         <p id="loadMsg" style="display:none; color:#3498db; margin-top:10px;">Connecting...</p>
+        <button onclick="location.reload()" style="margin-top:20px; background:none; border:none; color:white; text-decoration:underline; font-size:12px;">App not loading? Refresh Page</button>
     </div>
 </div>
 
@@ -89,7 +72,6 @@
     <div id="main">
         <div id="clientView" style="display:none; display: flex; flex-direction: column; height: 100%;">
             <h1 id="activeTitle" style="margin-top:0;">Client</h1>
-            
             <div class="map-section">
                 <div class="map-grid">
                     <div class="zone-col">
@@ -108,3 +90,192 @@
                         <button class="zone-btn" onclick="tapZone('Rhomboids/Scap')">Rhomboids/Scapula</button>
                         <button class="zone-btn" onclick="tapZone('Lats')">Lats</button>
                         <button class="zone-btn" onclick="tapZone('Erectors/Low Back')">Low Back</button>
+                        <button class="zone-btn" onclick="tapZone('Glutes')">Glutes</button>
+                        <button class="zone-btn" onclick="tapZone('Hamstrings')">Hamstrings</button>
+                        <button class="zone-btn" onclick="tapZone('Calves')">Calves</button>
+                    </div>
+                </div>
+            </div>
+            <div class="soap-card">
+                <label>Treatment Type</label>
+                <select onchange="addText('a', 'Type: ' + this.value); this.value='';">
+                    <option value="">-- Select Type --</option>
+                    <option value="Relaxation">Relaxation</option>
+                    <option value="Therapeutic">Therapeutic</option>
+                    <option value="Deep Tissue">Deep Tissue</option>
+                    <option value="Injury Recovery">Injury Recovery</option>
+                </select>
+                <textarea id="s" placeholder="S: Subjective..."></textarea>
+                <textarea id="o" placeholder="O: Objective..."></textarea>
+                <select onchange="addText('a', 'Tension Found: ' + this.value + '/5.'); this.value='';">
+                    <option value="">-- Tension Scale --</option>
+                    <option value="1">1 - Minimal</option>
+                    <option value="2">2 - Mild</option>
+                    <option value="3">3 - Moderate</option>
+                    <option value="4">4 - High</option>
+                    <option value="5">5 - Extreme</option>
+                </select>
+                <textarea id="a" placeholder="A: Assessment..."></textarea>
+                <textarea id="p" placeholder="P: Plan..."></textarea>
+                <button class="btn btn-save" onclick="saveNote()">SAVE SESSION</button>
+            </div>
+            <div id="history"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let db, currentId = null, editingNoteId = null;
+
+    function checkPin() {
+        if (document.getElementById('pinField').value === '1234') {
+            document.getElementById('loadMsg').style.display = 'block';
+            document.getElementById('unlockBtn').innerText = 'Opening...';
+            initDB();
+        } else { alert("Wrong PIN"); }
+    }
+
+    function initDB() {
+        // Version 3 to force a clean slate for the index
+        const req = indexedDB.open("ClinicDB_Final", 3);
+        
+        req.onblocked = () => {
+            alert("Database blocked. Please close other tabs of this app and try again.");
+            location.reload();
+        };
+
+        req.onupgradeneeded = e => {
+            let d = e.target.result;
+            if (!d.objectStoreNames.contains("clients")) d.createObjectStore("clients", {keyPath: "id", autoIncrement: true});
+            if (!d.objectStoreNames.contains("notes")) {
+                let s = d.createObjectStore("notes", {keyPath: "id", autoIncrement: true});
+                s.createIndex("cId", "cId");
+            } else {
+                let s = e.target.transaction.objectStore("notes");
+                if (!s.indexNames.contains("cId")) s.createIndex("cId", "cId");
+            }
+        };
+
+        req.onsuccess = e => { 
+            db = e.target.result; 
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'flex';
+            renderList(); 
+        };
+        
+        req.onerror = () => alert("Storage Error. Check if Private Browsing is blocking IndexedDB.");
+    }
+
+    function openModal(noteJson) {
+        const n = JSON.parse(decodeURIComponent(noteJson));
+        editingNoteId = n.id;
+        document.getElementById('modalTitle').innerText = `Session: ${n.date}`;
+        document.getElementById('modalBody').innerHTML = `
+            <label>S</label><textarea id="editS">${n.s}</textarea>
+            <label>O</label><textarea id="editO">${n.o}</textarea>
+            <label>A</label><textarea id="editA">${n.a}</textarea>
+            <label>P</label><textarea id="editP">${n.p}</textarea>
+        `;
+        document.getElementById('modalFooter').innerHTML = `
+            <button class="btn btn-save" onclick="updateNote()">SAVE CHANGES</button>
+            <button class="btn btn-danger" style="margin-top:10px; width:100%;" onclick="deleteNote(${n.id})">DELETE ACCIDENTAL NOTE</button>
+        `;
+        document.getElementById('modalOverlay').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+
+    function updateNote() {
+        const tx = db.transaction("notes", "readwrite");
+        const store = tx.objectStore("notes");
+        store.get(editingNoteId).onsuccess = e => {
+            const data = e.target.result;
+            data.s = document.getElementById('editS').value;
+            data.o = document.getElementById('editO').value;
+            data.a = document.getElementById('editA').value;
+            data.p = document.getElementById('editP').value;
+            store.put(data);
+        };
+        tx.oncomplete = () => { closeModal(); renderNotes(); };
+    }
+
+    function deleteNote(id) {
+        if(confirm("Permanently delete this accidental note?")) {
+            const tx = db.transaction("notes", "readwrite");
+            tx.objectStore("notes").delete(id);
+            tx.oncomplete = () => { closeModal(); renderNotes(); };
+        }
+    }
+
+    function tapZone(zone) { addText('s', zone + ":"); addText('o', zone + ":"); }
+    function addText(id, text) { const el = document.getElementById(id); if (el) el.value += (el.value ? " " : "") + text; }
+
+    function addClient() {
+        const name = document.getElementById('newName').value;
+        if (!name) return;
+        const tx = db.transaction("clients", "readwrite");
+        tx.objectStore("clients").add({name});
+        tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
+    }
+
+    function renderList() {
+        const list = document.getElementById('clientList');
+        const search = document.getElementById('searchBar').value.toLowerCase();
+        list.innerHTML = "";
+        db.transaction("clients").objectStore("clients").getAll().onsuccess = e => {
+            e.target.result.filter(c => c.name.toLowerCase().includes(search)).forEach(c => {
+                const div = document.createElement('div');
+                div.className = `client-item ${currentId === c.id ? 'active-client' : ''}`;
+                div.innerText = c.name;
+                div.onclick = () => { currentId = c.id; document.getElementById('clientView').style.display='flex'; document.getElementById('deleteBtn').style.display='block'; document.getElementById('activeTitle').innerText=c.name; renderList(); renderNotes(); };
+                list.appendChild(div);
+            });
+        };
+    }
+
+    function deleteClient() {
+        if (!currentId || !confirm("Delete client and all history?")) return;
+        const tx = db.transaction(["clients", "notes"], "readwrite");
+        tx.objectStore("clients").delete(currentId);
+        const notesStore = tx.objectStore("notes");
+        notesStore.index("cId").openCursor(IDBKeyRange.only(currentId)).onsuccess = e => {
+            const cursor = e.target.result; if (cursor) { cursor.delete(); cursor.continue(); }
+        };
+        tx.oncomplete = () => { currentId = null; document.getElementById('clientView').style.display = 'none'; document.getElementById('deleteBtn').style.display = 'none'; renderList(); };
+    }
+
+    function saveNote() {
+        const n = { 
+            cId: currentId, date: new Date().toLocaleDateString(), 
+            s: document.getElementById('s').value, o: document.getElementById('o').value, 
+            a: document.getElementById('a').value, p: document.getElementById('p').value 
+        };
+        const tx = db.transaction("notes", "readwrite");
+        tx.objectStore("notes").add(n);
+        tx.oncomplete = () => { ['s','o','a','p'].forEach(i => document.getElementById(i).value = ""); renderNotes(); alert("Saved"); };
+    }
+
+    function renderNotes() {
+        const h = document.getElementById('history');
+        h.innerHTML = "<h3>Session History (Click to Edit)</h3>";
+        if (!currentId) return;
+        db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
+            e.target.result.sort((a, b) => b.id - a.id).forEach(n => {
+                const noteData = encodeURIComponent(JSON.stringify(n));
+                h.innerHTML += `<div class="history-card" onclick="openModal('${noteData}')"><strong>${n.date}</strong><br><small>${n.s.substring(0, 40)}...</small></div>`;
+            });
+        };
+    }
+
+    async function exportData() {
+        const clients = await new Promise(r => db.transaction("clients").objectStore("clients").getAll().onsuccess = e => r(e.target.result));
+        const notes = await new Promise(r => db.transaction("notes").objectStore("notes").getAll().onsuccess = e => r(e.target.result));
+        const blob = new Blob([JSON.stringify({clients, notes})], {type: "application/json"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `Clinical_Backup.json`;
+        a.click();
+    }
+</script>
+</body>
+</html>
