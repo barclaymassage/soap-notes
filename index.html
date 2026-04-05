@@ -5,70 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="data:application/json,{'display':'standalone','name':'Clinical Manager'}">
+    <link rel="manifest" href="data:application/json,{'display':'standalone','name':'Clinic Manager'}">
     <title>Clinical Manager</title>
     <style>
-        /* Hidden until PIN is correct */
-        #appContent { display: none; }
-        #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; background: #2c3e50; color: white; flex-direction: column; }
-        .pin-input { padding: 15px; font-size: 24px; width: 150px; text-align: center; border-radius: 8px; border: none; margin-bottom: 10px; }
-        /* Existing Styles */
-        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --success: #27ae60; }
-        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; overflow: hidden; }
-        #container { display: flex; height: 100vh; }
-        #sidebar { width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
-        #main { flex-grow: 1; padding: 20px; overflow-y: auto; }
-        .client-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
-        .active { background: var(--accent); color: white; }
-        textarea { width: 100%; height: 80px; margin: 10px 0; border-radius: 6px; border: 1px solid #ddd; padding: 10px; }
-        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; background: var(--accent); color: white; }
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --success: #27ae60; --text: #333; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; color: var(--text); overflow: hidden; }
+        #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; flex-direction: column; z-index: 999; position: relative; }
+        #appContent { display: none; height: 100vh; flex-direction: row; display: none; }
+        
+        /* Sidebar & Search */
+        #sidebar { width: 320px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; height: 100vh; }
+        .sidebar-header { padding: 15px; border-bottom: 1px solid #eee; background: #fff; }
+        #searchBar { margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        #clientList { overflow-y: auto; flex-grow: 1; }
+        .client-item { padding: 15px; border-bottom: 1px solid #f9f9f9; cursor: pointer; transition: 0.2s; }
+        .client-item:hover { background: #f0f7ff; }
+        .active-client { background: var(--accent) !important; color: white; font-weight: bold; }
+
+        /* Main Area */
+        #main { flex-grow: 1; padding: 25px; overflow-y: auto; background: var(--bg); }
+        .soap-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; }
+        
+        /* Dropdowns & Inputs */
+        label { font-weight: bold; display: block; margin: 15px 0 5px; color: var(--primary); font-size: 0.9rem; }
+        select, textarea, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        textarea { height: 100px; resize: none; font-family: inherit; }
+        .quick-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        
+        .btn { padding: 15px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        .btn-add { background: var(--accent); color: white; margin-top: 5px; }
+        .btn-save { background: var(--success); color: white; margin-top: 20px; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3); }
+        
+        .history-item { background: #fff; border-left: 4px solid var(--accent); padding: 15px; margin-top: 15px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
 <div id="loginScreen">
-    <h2>Enter Clinic PIN</h2>
-    <input type="password" id="pinField" class="pin-input" placeholder="****" inputmode="numeric">
-    <button class="btn" style="width:160px;" onclick="checkPin()">Unlock</button>
+    <h2>Clinic Access</h2>
+    <input type="password" id="pinField" style="width:180px; padding:15px; text-align:center; font-size:24px; border-radius:8px; border:none; margin-bottom:15px;" placeholder="PIN" inputmode="numeric">
+    <button class="btn" style="width:180px; background:#fff; color:var(--primary)" onclick="checkPin()">Unlock App</button>
 </div>
 
 <div id="appContent">
-    <div id="container">
-        <div id="sidebar">
-            <div style="padding:15px; border-bottom:1px solid #eee;">
-                <input type="text" id="newName" placeholder="New Client Name...">
-                <button class="btn" onclick="addClient()" style="margin-top:10px;">+ Create File</button>
-            </div>
-            <div id="list"></div>
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <input type="text" id="searchBar" placeholder="Search Clients..." oninput="renderList()">
+            <input type="text" id="newName" placeholder="New Client Name">
+            <button class="btn btn-add" onclick="addClient()">+ Create New File</button>
         </div>
-        <div id="main">
-            <div id="view" style="display:none;">
-                <h2 id="title">Client</h2>
-                <textarea id="s" placeholder="Subjective"></textarea>
-                <textarea id="o" placeholder="Objective"></textarea>
-                <textarea id="a" placeholder="Assessment"></textarea>
-                <textarea id="p" placeholder="Plan"></textarea>
-                <button class="btn" style="background:var(--success)" onclick="saveNote()">Save SOAP Note</button>
-                <div id="history"></div>
+        <div id="clientList"></div>
+    </div>
+
+    <div id="main">
+        <div id="clientView" style="display:none;">
+            <h1 id="activeTitle" style="margin-top:0; color:var(--primary)">Client Name</h1>
+            
+            <div class="soap-card">
+                <div class="quick-row">
+                    <div>
+                        <label>Common Findings (Subjective)</label>
+                        <select onchange="addText('s', this.value); this.value='';">
+                            <option value="">-- Quick Select --</option>
+                            <option value="Reports localized neck pain.">Neck Pain</option>
+                            <option value="Reports tension headaches.">Headache</option>
+                            <option value="Stiffness in lower back.">LBP Stiffness</option>
+                            <option value="Increased stress levels recently.">High Stress</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Treatment Focus (Plan)</label>
+                        <select onchange="addText('p', this.value); this.value='';">
+                            <option value="">-- Quick Select --</option>
+                            <option value="Focus on myofascial release.">Myofascial</option>
+                            <option value="Trigger point therapy to traps.">Trigger Point</option>
+                            <option value="Deep tissue to glutes/low back.">Deep Tissue</option>
+                            <option value="Follow up in 2 weeks.">2-Week Followup</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label>S (Subjective)</label>
+                <textarea id="s" placeholder="Client reports..."></textarea>
+                
+                <label>O (Objective)</label>
+                <textarea id="o" placeholder="Palpation, ROM, Heat..."></textarea>
+                
+                <label>A (Assessment)</label>
+                <textarea id="a" placeholder="Progress, response to treatment..."></textarea>
+                
+                <label>P (Plan)</label>
+                <textarea id="p" placeholder="Homework, next session..."></textarea>
+
+                <button class="btn btn-save" onclick="saveNote()">SAVE SOAP NOTE</button>
             </div>
+
+            <div id="history"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- PIN SYSTEM (Change '1234' to your own) ---
+    // --- AUTH ---
     function checkPin() {
         if (document.getElementById('pinField').value === '1234') {
             document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appContent').style.display = 'block';
+            document.getElementById('appContent').style.display = 'flex';
             initDB();
-        } else { alert('Incorrect PIN'); }
+        } else { alert("Wrong PIN"); }
     }
 
-    // --- DATABASE & LOGIC ---
+    function addText(id, text) {
+        const el = document.getElementById(id);
+        el.value += (el.value ? " " : "") + text;
+    }
+
+    // --- DB ENGINE ---
     let db, currentId = null;
     function initDB() {
-        const req = indexedDB.open("ClinicDB_v2", 1);
+        const req = indexedDB.open("MassageClinicDB_v3", 1);
         req.onupgradeneeded = e => {
             let d = e.target.result;
             d.createObjectStore("clients", {keyPath: "id", autoIncrement: true});
@@ -78,7 +133,7 @@
     }
 
     function addClient() {
-        const name = document.getElementById('newName').value;
+        const name = document.getElementById('newName').value.trim();
         if (!name) return;
         db.transaction("clients", "readwrite").objectStore("clients").add({name}).onsuccess = () => {
             document.getElementById('newName').value = "";
@@ -87,34 +142,55 @@
     }
 
     function renderList() {
-        const list = document.getElementById('list');
+        const list = document.getElementById('clientList');
+        const search = document.getElementById('searchBar').value.toLowerCase();
         list.innerHTML = "";
         db.transaction("clients").objectStore("clients").getAll().onsuccess = e => {
-            e.target.result.forEach(c => {
-                const d = document.createElement('div');
-                d.className = `client-item ${currentId === c.id ? 'active' : ''}`;
-                d.innerText = c.name;
-                d.onclick = () => { currentId = c.id; document.getElementById('view').style.display='block'; document.getElementById('title').innerText=c.name; renderNotes(); };
-                list.appendChild(d);
+            e.target.result.filter(c => c.name.toLowerCase().includes(search)).forEach(c => {
+                const div = document.createElement('div');
+                div.className = `client-item ${currentId === c.id ? 'active-client' : ''}`;
+                div.innerText = c.name;
+                div.onclick = () => { selectClient(c); };
+                list.appendChild(div);
             });
         };
     }
 
+    function selectClient(c) {
+        currentId = c.id;
+        document.getElementById('clientView').style.display = 'block';
+        document.getElementById('activeTitle').innerText = c.name;
+        renderList();
+        renderNotes();
+    }
+
     function saveNote() {
-        const n = { cId: currentId, date: new Date().toLocaleDateString(), s: document.getElementById('s').value, o: document.getElementById('o').value, a: document.getElementById('a').value, p: document.getElementById('p').value };
-        db.transaction("notes", "readwrite").objectStore("notes").add(n).onsuccess = () => {
+        const note = { 
+            cId: currentId, 
+            date: new Date().toLocaleDateString(), 
+            s: document.getElementById('s').value, 
+            o: document.getElementById('o').value, 
+            a: document.getElementById('a').value, 
+            p: document.getElementById('p').value 
+        };
+        db.transaction("notes", "readwrite").objectStore("notes").add(note).onsuccess = () => {
             ['s','o','a','p'].forEach(i => document.getElementById(i).value = "");
             renderNotes();
-            alert("Saved");
+            alert("Note Saved Successfully");
         };
     }
 
     function renderNotes() {
         const h = document.getElementById('history');
-        h.innerHTML = "<h3>History</h3>";
+        h.innerHTML = "<h2 style='margin-top:30px; color:var(--primary)'>Session History</h2>";
         db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
             e.target.result.reverse().forEach(n => {
-                h.innerHTML += `<div style="border-bottom:1px solid #ddd; padding:10px;"><b>${n.date}</b><br>S: ${n.s}<br>O: ${n.o}</div>`;
+                h.innerHTML += `
+                    <div class="history-item">
+                        <b>Date: ${n.date}</b><br>
+                        <small>S: ${n.s}</small><br>
+                        <small>O: ${n.o}</small>
+                    </div>`;
             });
         };
     }
