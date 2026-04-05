@@ -144,12 +144,21 @@
     }
 
     function initDB() {
-        const req = indexedDB.open("ClinicDB_Final", 1);
+        // Bumped version to 2 to force the index creation
+        const req = indexedDB.open("ClinicDB_Final", 2);
+        
         req.onupgradeneeded = e => {
             let d = e.target.result;
             if (!d.objectStoreNames.contains("clients")) d.createObjectStore("clients", {keyPath: "id", autoIncrement: true});
-            if (!d.objectStoreNames.contains("notes")) d.createObjectStore("notes", {keyPath: "id", autoIncrement: true}).createIndex("cId", "cId");
+            if (!d.objectStoreNames.contains("notes")) {
+                let noteStore = d.createObjectStore("notes", {keyPath: "id", autoIncrement: true});
+                noteStore.createIndex("cId", "cId");
+            } else {
+                let noteStore = e.target.transaction.objectStore("notes");
+                if (!noteStore.indexNames.contains("cId")) noteStore.createIndex("cId", "cId");
+            }
         };
+
         req.onsuccess = e => { 
             db = e.target.result; 
             document.getElementById('loginScreen').style.display = 'none';
@@ -219,7 +228,13 @@
                 const div = document.createElement('div');
                 div.className = `client-item ${currentId === c.id ? 'active-client' : ''}`;
                 div.innerText = c.name;
-                div.onclick = () => { currentId = c.id; document.getElementById('clientView').style.display='block'; document.getElementById('deleteBtn').style.display='block'; document.getElementById('activeTitle').innerText=c.name; renderList(); renderNotes(); };
+                div.onclick = () => { 
+                    currentId = c.id; 
+                    document.getElementById('clientView').style.display='block'; 
+                    document.getElementById('deleteBtn').style.display='block'; 
+                    document.getElementById('activeTitle').innerText=c.name; 
+                    renderList(); renderNotes(); 
+                };
                 list.appendChild(div);
             });
         };
@@ -250,8 +265,14 @@
     function renderNotes() {
         const h = document.getElementById('history');
         h.innerHTML = "<h3>Session History (Click to Edit)</h3>";
-        db.transaction("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
-            e.target.result.reverse().forEach(n => {
+        if (!currentId) return;
+
+        const store = db.transaction("notes").objectStore("notes");
+        const index = store.index("cId");
+        
+        index.getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
+            const notes = e.target.result;
+            notes.sort((a, b) => b.id - a.id).forEach(n => {
                 const noteData = encodeURIComponent(JSON.stringify(n));
                 h.innerHTML += `<div class="history-card" onclick="openModal('${noteData}')"><strong>${n.date}</strong><br><small>${n.s.substring(0, 40)}...</small></div>`;
             });
