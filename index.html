@@ -18,7 +18,8 @@
         .zone-btn { padding: 10px; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
         .soap-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; }
         textarea { width: 100%; height: 80px; border-radius: 8px; border: 1px solid #ccc; padding: 10px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
-        select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; }
+        select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--primary); font-size: 14px; }
         .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; font-size: 18px; }
         .client-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
@@ -63,18 +64,58 @@
                     </div>
                 </div>
             </div>
+
             <div class="soap-card">
+                <label>Treatment Provided</label>
+                <select onchange="addText('a', 'Type: ' + this.value); this.value='';">
+                    <option value="">-- Choose Type --</option>
+                    <option value="Relaxation / Swedish">Relaxation</option>
+                    <option value="Therapeutic / Focused">Therapeutic</option>
+                    <option value="Deep Tissue">Deep Tissue</option>
+                    <option value="Injury Recovery Protocol">Injury Recovery</option>
+                </select>
+
                 <label>S (Subjective)</label>
                 <select onchange="addText('s', this.value); this.value='';">
                     <option value="">-- Quick S --</option>
-                    <option value="Reports localized pain.">Localized Pain</option>
+                    <option value="Reports general discomfort.">Discomfort</option>
+                    <option value="Reports chronic pain.">Chronic Pain</option>
+                    <option value="Presenting for injury recovery.">Injury Recovery</option>
                     <option value="Pain level 5/10.">Pain 5/10</option>
                 </select>
-                <textarea id="s"></textarea>
+                <textarea id="s" placeholder="Reason for visit..."></textarea>
+
                 <label>O (Objective)</label>
-                <textarea id="o"></textarea>
+                <select onchange="addText('o', this.value); this.value='';">
+                    <option value="">-- Quick O --</option>
+                    <option value="Released muscular tension.">Release Tension</option>
+                    <option value="Adhesions addressed in target area.">Adhesions</option>
+                    <option value="Hypertonicity noted.">Hypertonicity</option>
+                    <option value="Trigger points palpated.">Trigger Points</option>
+                </select>
+                <textarea id="o" placeholder="Findings/Palpation..."></textarea>
+
+                <label>A (Assessment - Tension 1-5)</label>
+                <select onchange="addText('a', 'Tension Found: ' + this.value + '/5'); this.value='';">
+                    <option value="">-- Tension Level --</option>
+                    <option value="1">1 - Minimal</option>
+                    <option value="2">2 - Mild</option>
+                    <option value="3">3 - Moderate</option>
+                    <option value="4">4 - High</option>
+                    <option value="5">5 - Extreme</option>
+                </select>
+                <textarea id="a" placeholder="Progress notes..."></textarea>
+
                 <label>P (Plan)</label>
-                <textarea id="p"></textarea>
+                <select onchange="addText('p', this.value); this.value='';">
+                    <option value="">-- Quick P --</option>
+                    <option value="Instructed to hydrate.">Hydrate</option>
+                    <option value="Advised to stretch target area daily.">Stretch</option>
+                    <option value="Recommend Epsom salt bath.">Epsom Salt</option>
+                    <option value="Follow up in 1 week.">1 Week Follow Up</option>
+                </select>
+                <textarea id="p" placeholder="Homework/Next steps..."></textarea>
+
                 <button class="btn btn-save" onclick="saveNote()">SAVE SESSION</button>
             </div>
             <div id="history"></div>
@@ -83,7 +124,6 @@
 </div>
 
 <script>
-    // OFFLINE LOGIC
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('data:text/javascript;base64,' + btoa(`
@@ -137,9 +177,10 @@
 
     function renderList() {
         const list = document.getElementById('clientList');
+        const search = document.getElementById('searchBar').value.toLowerCase();
         list.innerHTML = "";
         db.transaction("clients").objectStore("clients").getAll().onsuccess = e => {
-            e.target.result.forEach(c => {
+            e.target.result.filter(c => c.name.toLowerCase().includes(search)).forEach(c => {
                 const div = document.createElement('div');
                 div.className = `client-item ${currentId === c.id ? 'active-client' : ''}`;
                 div.innerText = c.name;
@@ -150,9 +191,16 @@
     }
 
     function saveNote() {
-        const n = { cId: currentId, date: new Date().toLocaleDateString(), s: document.getElementById('s').value, o: document.getElementById('o').value, p: document.getElementById('p').value };
+        const n = { 
+            cId: currentId, 
+            date: new Date().toLocaleDateString(), 
+            s: document.getElementById('s').value, 
+            o: document.getElementById('o').value, 
+            a: document.getElementById('a').value,
+            p: document.getElementById('p').value 
+        };
         db.transaction("notes", "readwrite").objectStore("notes").add(n).onsuccess = () => {
-            ['s','o','p'].forEach(i => document.getElementById(i).value = "");
+            ['s','o','a','p'].forEach(i => document.getElementById(i).value = "");
             renderNotes();
             alert("Saved");
         };
@@ -163,7 +211,7 @@
         h.innerHTML = "<h3>History</h3>";
         db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
             e.target.result.reverse().forEach(n => {
-                h.innerHTML += `<div style="background:#fff; padding:10px; border-left:4px solid var(--accent); margin-top:10px;"><b>${n.date}</b><br>S: ${n.s}</div>`;
+                h.innerHTML += `<div style="background:#fff; padding:10px; border-left:4px solid var(--accent); margin-top:10px; border-radius:4px; box-shadow:0 2px 4px rgba(0,0,0,0.05);"><b>${n.date}</b><br><small>S: ${n.s}</small><br><small>O: ${n.o}</small><br><small>A: ${n.a}</small><br><small>P: ${n.p}</small></div>`;
             });
         };
     }
@@ -174,7 +222,7 @@
         const blob = new Blob([JSON.stringify({clients, notes})], {type: "application/json"});
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `Backup.json`;
+        a.download = `Backup_${new Date().toLocaleDateString().replace(/\//g,'-')}.json`;
         a.click();
     }
 </script>
