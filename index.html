@@ -24,6 +24,7 @@
         label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--primary); font-size: 14px; }
         .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; font-size: 18px; }
+        .btn-danger { background: var(--danger); color: white; width: 100%; font-size: 12px; margin-top: auto; }
         .client-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
         .active-client { background: var(--accent) !important; color: white; }
     </style>
@@ -44,7 +45,11 @@
             <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:5px;" onclick="addClient()">+ Add Client</button>
         </div>
         <div id="clientList" style="flex-grow:1; overflow-y:auto;"></div>
-        <button class="btn" style="margin:10px; font-size:10px;" onclick="exportData()">💾 Backup Data</button>
+        
+        <div style="padding:10px; display:flex; flex-direction:column; gap:5px; border-top:1px solid #eee;">
+            <button id="deleteBtn" class="btn btn-danger" style="display:none;" onclick="deleteClient()">Delete Active Client</button>
+            <button class="btn" style="font-size:10px; background:#ddd;" onclick="exportData()">💾 Backup Data</button>
+        </div>
     </div>
 
     <div id="main">
@@ -131,120 +136,3 @@
             </div>
             <div id="history"></div>
         </div>
-    </div>
-</div>
-
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('data:text/javascript;base64,' + btoa(`
-                self.addEventListener('install', e => self.skipWaiting());
-                self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-            `));
-        });
-    }
-
-    let db, currentId = null;
-
-    function checkPin() {
-        if (document.getElementById('pinField').value === '1234') {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appContent').style.display = 'flex';
-            initDB();
-        } else { alert("Wrong PIN"); }
-    }
-
-    function tapZone(zone) {
-        addText('s', zone + ":");
-        addText('o', zone + ":");
-    }
-
-    function addText(id, text) {
-        const el = document.getElementById(id);
-        el.value += (el.value ? " " : "") + text;
-    }
-
-    function initDB() {
-        const req = indexedDB.open("ClinicDB_Final", 1);
-        req.onupgradeneeded = e => {
-            let d = e.target.result;
-            d.createObjectStore("clients", {keyPath: "id", autoIncrement: true});
-            d.createObjectStore("notes", {keyPath: "id", autoIncrement: true}).createIndex("cId", "cId");
-        };
-        req.onsuccess = e => { db = e.target.result; renderList(); };
-    }
-
-    function addClient() {
-        const name = document.getElementById('newName').value;
-        if (!name) return;
-        db.transaction("clients", "readwrite").objectStore("clients").add({name}).onsuccess = () => {
-            document.getElementById('newName').value = "";
-            renderList();
-        };
-    }
-
-    function renderList() {
-        const list = document.getElementById('clientList');
-        const search = document.getElementById('searchBar').value.toLowerCase();
-        list.innerHTML = "";
-        db.transaction("clients").objectStore("clients").getAll().onsuccess = e => {
-            e.target.result.filter(c => c.name.toLowerCase().includes(search)).forEach(c => {
-                const div = document.createElement('div');
-                div.className = `client-item ${currentId === c.id ? 'active-client' : ''}`;
-                div.innerText = c.name;
-                div.onclick = () => { 
-                    currentId = c.id; 
-                    document.getElementById('clientView').style.display='block'; 
-                    document.getElementById('activeTitle').innerText=c.name; 
-                    renderList(); 
-                    renderNotes(); 
-                };
-                list.appendChild(div);
-            });
-        };
-    }
-
-    function saveNote() {
-        const n = { 
-            cId: currentId, 
-            date: new Date().toLocaleDateString(), 
-            s: document.getElementById('s').value, 
-            o: document.getElementById('o').value, 
-            a: document.getElementById('a').value,
-            p: document.getElementById('p').value 
-        };
-        db.transaction("notes", "readwrite").objectStore("notes").add(n).onsuccess = () => {
-            ['s','o','a','p'].forEach(i => document.getElementById(i).value = "");
-            renderNotes();
-            alert("Session Saved");
-        };
-    }
-
-    function renderNotes() {
-        const h = document.getElementById('history');
-        h.innerHTML = "<h3>Session History</h3>";
-        db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
-            e.target.result.reverse().forEach(n => {
-                h.innerHTML += `<div style="background:#fff; padding:12px; border-left:4px solid var(--accent); margin-top:10px; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                    <b>${n.date}</b><br>
-                    <small><b>S:</b> ${n.s}</small><br>
-                    <small><b>O:</b> ${n.o}</small><br>
-                    <small><b>A:</b> ${n.a}</small><br>
-                    <small><b>P:</b> ${n.p}</small>
-                </div>`;
-            });
-        };
-    }
-
-    async function exportData() {
-        const clients = await new Promise(r => db.transaction("clients").objectStore("clients").getAll().onsuccess = e => r(e.target.result));
-        const notes = await new Promise(r => db.transaction("notes").objectStore("notes").getAll().onsuccess = e => r(e.target.result));
-        const blob = new Blob([JSON.stringify({clients, notes})], {type: "application/json"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `Clinical_Backup_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-    }
-</script>
-</body>
-</html>
