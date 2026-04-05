@@ -13,12 +13,14 @@
         #appContent { display: none; height: 100vh; flex-direction: row; }
         #sidebar { width: 320px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
         #main { flex-grow: 1; padding: 25px; overflow-y: auto; padding-bottom: 150px; }
-        .map-section { background: #eaeff2; padding: 15px; border-radius: 12px; margin-bottom: 20px; max-width: 800px; margin: 0 auto; }
-        .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .zone-btn { padding: 10px; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
-        .soap-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; }
+        .map-section { background: #eaeff2; padding: 15px; border-radius: 12px; margin-bottom: 20px; max-width: 850px; margin: 0 auto; }
+        .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .zone-col { display: flex; flex-direction: column; gap: 6px; }
+        .zone-btn { padding: 10px; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; color: var(--primary); }
+        .zone-btn:active { background: var(--accent); color: white; }
+        .soap-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 850px; margin: 0 auto; }
         textarea { width: 100%; height: 80px; border-radius: 8px; border: 1px solid #ccc; padding: 10px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
-        select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; }
+        select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--primary); font-size: 14px; }
         .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; font-size: 18px; }
@@ -42,79 +44,88 @@
             <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:5px;" onclick="addClient()">+ Add Client</button>
         </div>
         <div id="clientList" style="flex-grow:1; overflow-y:auto;"></div>
-        <button class="btn" style="margin:10px; font-size:10px;" onclick="exportData()">💾 Backup</button>
+        <button class="btn" style="margin:10px; font-size:10px;" onclick="exportData()">💾 Backup Data</button>
     </div>
 
     <div id="main">
         <div id="clientView" style="display:none;">
-            <h1 id="activeTitle">Client</h1>
+            <h1 id="activeTitle" style="margin-top:0;">Client</h1>
+            
             <div class="map-section">
                 <div class="map-grid">
-                    <div style="display:flex; flex-direction:column; gap:5px;">
-                        <span style="font-size:10px; text-align:center;">FRONT</span>
-                        <button class="zone-btn" onclick="tapZone('Neck')">Neck</button>
-                        <button class="zone-btn" onclick="tapZone('Chest')">Chest</button>
+                    <div class="zone-col">
+                        <span style="font-size:10px; text-align:center; font-weight:bold; color:#7f8c8d;">ANTERIOR (FRONT)</span>
+                        <button class="zone-btn" onclick="tapZone('Neck (Ant)')">Neck</button>
+                        <button class="zone-btn" onclick="tapZone('Pecs')">Pecs/Chest</button>
+                        <button class="zone-btn" onclick="tapZone('Deltoids (Ant)')">Shoulders</button>
+                        <button class="zone-btn" onclick="tapZone('Abs/Psoas')">Abs/Psoas</button>
+                        <button class="zone-btn" onclick="tapZone('Forearms (Flex)')">Forearms</button>
                         <button class="zone-btn" onclick="tapZone('Quads')">Quads</button>
+                        <button class="zone-btn" onclick="tapZone('Tibialis Ant')">Shins</button>
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:5px;">
-                        <span style="font-size:10px; text-align:center;">BACK</span>
-                        <button class="zone-btn" onclick="tapZone('Traps')">Traps</button>
-                        <button class="zone-btn" onclick="tapZone('Low Back')">Low Back</button>
+                    <div class="zone-col">
+                        <span style="font-size:10px; text-align:center; font-weight:bold; color:#7f8c8d;">POSTERIOR (BACK)</span>
+                        <button class="zone-btn" onclick="tapZone('Upper Traps')">Upper Traps</button>
+                        <button class="zone-btn" onclick="tapZone('Rhomboids/Scap')">Rhomboids/Scapula</button>
+                        <button class="zone-btn" onclick="tapZone('Lats')">Lats</button>
+                        <button class="zone-btn" onclick="tapZone('Erectors/Low Back')">Low Back</button>
                         <button class="zone-btn" onclick="tapZone('Glutes')">Glutes</button>
+                        <button class="zone-btn" onclick="tapZone('Hamstrings')">Hamstrings</button>
+                        <button class="zone-btn" onclick="tapZone('Calves')">Calves</button>
                     </div>
                 </div>
             </div>
 
             <div class="soap-card">
-                <label>Treatment Provided</label>
-                <select onchange="addText('a', 'Type: ' + this.value); this.value='';">
-                    <option value="">-- Choose Type --</option>
-                    <option value="Relaxation / Swedish">Relaxation</option>
-                    <option value="Therapeutic / Focused">Therapeutic</option>
+                <label>Treatment Type</label>
+                <select onchange="addText('a', 'Modality: ' + this.value); this.value='';">
+                    <option value="">-- Select Type --</option>
+                    <option value="Relaxation">Relaxation</option>
+                    <option value="Therapeutic">Therapeutic</option>
                     <option value="Deep Tissue">Deep Tissue</option>
-                    <option value="Injury Recovery Protocol">Injury Recovery</option>
+                    <option value="Injury Recovery">Injury Recovery</option>
                 </select>
 
                 <label>S (Subjective)</label>
                 <select onchange="addText('s', this.value); this.value='';">
                     <option value="">-- Quick S --</option>
-                    <option value="Reports general discomfort.">Discomfort</option>
-                    <option value="Reports chronic pain.">Chronic Pain</option>
-                    <option value="Presenting for injury recovery.">Injury Recovery</option>
-                    <option value="Pain level 5/10.">Pain 5/10</option>
+                    <option value="Reports localized discomfort.">Discomfort</option>
+                    <option value="Reports chronic pain patterns.">Chronic Pain</option>
+                    <option value="Seeking injury recovery.">Injury Recovery</option>
+                    <option value="Reports limited ROM and stiffness.">Limited ROM</option>
                 </select>
-                <textarea id="s" placeholder="Reason for visit..."></textarea>
+                <textarea id="s" placeholder="Client reports..."></textarea>
 
                 <label>O (Objective)</label>
                 <select onchange="addText('o', this.value); this.value='';">
                     <option value="">-- Quick O --</option>
-                    <option value="Released muscular tension.">Release Tension</option>
-                    <option value="Adhesions addressed in target area.">Adhesions</option>
-                    <option value="Hypertonicity noted.">Hypertonicity</option>
-                    <option value="Trigger points palpated.">Trigger Points</option>
+                    <option value="Work focused on releasing tension.">Release Tension</option>
+                    <option value="Significant adhesions noted/addressed.">Adhesions</option>
+                    <option value="Hypertonicity palpated in target area.">Hypertonicity</option>
+                    <option value="Active trigger points released.">Trigger Points</option>
                 </select>
-                <textarea id="o" placeholder="Findings/Palpation..."></textarea>
+                <textarea id="o" placeholder="Findings..."></textarea>
 
                 <label>A (Assessment - Tension 1-5)</label>
-                <select onchange="addText('a', 'Tension Found: ' + this.value + '/5'); this.value='';">
-                    <option value="">-- Tension Level --</option>
+                <select onchange="addText('a', 'Found Level ' + this.value + ' tension.'); this.value='';">
+                    <option value="">-- Tension Scale --</option>
                     <option value="1">1 - Minimal</option>
                     <option value="2">2 - Mild</option>
                     <option value="3">3 - Moderate</option>
                     <option value="4">4 - High</option>
                     <option value="5">5 - Extreme</option>
                 </select>
-                <textarea id="a" placeholder="Progress notes..."></textarea>
+                <textarea id="a" placeholder="Session summary..."></textarea>
 
                 <label>P (Plan)</label>
                 <select onchange="addText('p', this.value); this.value='';">
                     <option value="">-- Quick P --</option>
-                    <option value="Instructed to hydrate.">Hydrate</option>
-                    <option value="Advised to stretch target area daily.">Stretch</option>
-                    <option value="Recommend Epsom salt bath.">Epsom Salt</option>
-                    <option value="Follow up in 1 week.">1 Week Follow Up</option>
+                    <option value="Advised increased hydration.">Hydrate</option>
+                    <option value="Recommended specific stretching.">Stretch</option>
+                    <option value="Suggested Epsom salt soak.">Epsom Salt</option>
+                    <option value="Follow up scheduled.">Follow Up</option>
                 </select>
-                <textarea id="p" placeholder="Homework/Next steps..."></textarea>
+                <textarea id="p" placeholder="Homework..."></textarea>
 
                 <button class="btn btn-save" onclick="saveNote()">SAVE SESSION</button>
             </div>
@@ -136,14 +147,11 @@
     let db, currentId = null;
 
     function checkPin() {
-        const pin = document.getElementById('pinField').value;
-        if (pin === '1234') {
+        if (document.getElementById('pinField').value === '1234') {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
             initDB();
-        } else {
-            alert("Wrong PIN");
-        }
+        } else { alert("Wrong PIN"); }
     }
 
     function tapZone(zone) {
@@ -184,7 +192,13 @@
                 const div = document.createElement('div');
                 div.className = `client-item ${currentId === c.id ? 'active-client' : ''}`;
                 div.innerText = c.name;
-                div.onclick = () => { currentId = c.id; document.getElementById('clientView').style.display='block'; document.getElementById('activeTitle').innerText=c.name; renderList(); renderNotes(); };
+                div.onclick = () => { 
+                    currentId = c.id; 
+                    document.getElementById('clientView').style.display='block'; 
+                    document.getElementById('activeTitle').innerText=c.name; 
+                    renderList(); 
+                    renderNotes(); 
+                };
                 list.appendChild(div);
             });
         };
@@ -202,16 +216,22 @@
         db.transaction("notes", "readwrite").objectStore("notes").add(n).onsuccess = () => {
             ['s','o','a','p'].forEach(i => document.getElementById(i).value = "");
             renderNotes();
-            alert("Saved");
+            alert("Session Saved");
         };
     }
 
     function renderNotes() {
         const h = document.getElementById('history');
-        h.innerHTML = "<h3>History</h3>";
+        h.innerHTML = "<h3>Session History</h3>";
         db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
             e.target.result.reverse().forEach(n => {
-                h.innerHTML += `<div style="background:#fff; padding:10px; border-left:4px solid var(--accent); margin-top:10px; border-radius:4px; box-shadow:0 2px 4px rgba(0,0,0,0.05);"><b>${n.date}</b><br><small>S: ${n.s}</small><br><small>O: ${n.o}</small><br><small>A: ${n.a}</small><br><small>P: ${n.p}</small></div>`;
+                h.innerHTML += `<div style="background:#fff; padding:12px; border-left:4px solid var(--accent); margin-top:10px; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                    <b>${n.date}</b><br>
+                    <small><b>S:</b> ${n.s}</small><br>
+                    <small><b>O:</b> ${n.o}</small><br>
+                    <small><b>A:</b> ${n.a}</small><br>
+                    <small><b>P:</b> ${n.p}</small>
+                </div>`;
             });
         };
     }
@@ -222,7 +242,7 @@
         const blob = new Blob([JSON.stringify({clients, notes})], {type: "application/json"});
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `Backup_${new Date().toLocaleDateString().replace(/\//g,'-')}.json`;
+        a.download = `Clinical_Backup_${new Date().toISOString().slice(0,10)}.json`;
         a.click();
     }
 </script>
