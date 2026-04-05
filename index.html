@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,28 +7,20 @@
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --success: #27ae60; --danger: #e74c3c; }
         body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; overflow: hidden; height: 100vh; }
-        
-        /* LOGIN SCREEN - FORCED FORM FOCUS */
         #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; flex-direction: column; position: fixed; width: 100%; top: 0; left: 0; z-index: 1000; }
-        
         #appContent { display: none; height: 100vh; flex-direction: row; width: 100%; }
         #sidebar { width: 320px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; height: 100vh; }
         #clientList { flex-grow: 1; overflow-y: auto; }
-        
-        /* EXTRA CLEARANCE FOR TABLET BARS */
         .sidebar-footer { padding: 15px 15px 90px 15px; border-top: 1px solid #eee; background: #fafafa; }
-
         #main { flex-grow: 1; padding: 20px; overflow-y: auto; height: 100vh; box-sizing: border-box; }
         .map-section { background: #eaeff2; padding: 15px; border-radius: 12px; margin-bottom: 20px; max-width: 850px; margin: 0 auto 20px auto; }
         .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .zone-col { display: flex; flex-direction: column; gap: 6px; }
         .zone-btn { padding: 14px; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; color: var(--primary); }
         .zone-btn:active { background: var(--accent); color: white; }
-        
         .soap-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 850px; margin: 0 auto; }
         textarea { width: 100%; height: 90px; border-radius: 8px; border: 1px solid #ccc; padding: 10px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
         select { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 16px; }
-        
         .btn { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; font-size: 18px; }
         .btn-danger { background: var(--danger); color: white; width: 100%; font-size: 14px; margin-bottom: 10px; }
@@ -42,11 +33,7 @@
 <div id="loginScreen">
     <form onsubmit="checkPin(); return false;" style="text-align: center;">
         <h2>Clinic Access</h2>
-        <input type="password" id="pinField" 
-               style="padding:15px; text-align:center; font-size:24px; border-radius:8px; width: 220px; border: 1px solid #ccc;" 
-               placeholder="PIN" 
-               inputmode="numeric" 
-               pattern="[0-9]*">
+        <input type="password" id="pinField" style="padding:15px; text-align:center; font-size:24px; border-radius:8px; width: 220px; border: 1px solid #ccc;" placeholder="PIN" inputmode="numeric" pattern="[0-9]*">
         <br>
         <button type="submit" class="btn" style="width:220px; margin-top:15px; background: var(--accent); color: white;">UNLOCK</button>
     </form>
@@ -59,19 +46,15 @@
             <input type="text" id="newName" placeholder="New Client Name" style="width:100%; padding:12px; border-radius: 5px; border: 1px solid #ddd;">
             <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:5px;" onclick="addClient()">+ Add Client</button>
         </div>
-        
         <div id="clientList"></div>
-        
         <div class="sidebar-footer">
             <button id="deleteBtn" class="btn btn-danger" style="display:none; width:100%;" onclick="deleteClient()">DELETE CLIENT</button>
             <button class="btn" style="width:100%; font-size:11px; background:#ccc;" onclick="exportData()">💾 BACKUP ALL DATA</button>
         </div>
     </div>
-
     <div id="main">
         <div id="clientView" style="display:none;">
             <h1 id="activeTitle" style="margin-top:0;">Client</h1>
-            
             <div class="map-section">
                 <div class="map-grid">
                     <div class="zone-col">
@@ -96,7 +79,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="soap-card">
                 <label>Treatment Type</label>
                 <select onchange="addText('a', 'Type: ' + this.value); this.value='';">
@@ -106,7 +88,6 @@
                     <option value="Deep Tissue">Deep Tissue</option>
                     <option value="Injury Recovery">Injury Recovery</option>
                 </select>
-
                 <label>S (Subjective)</label>
                 <select onchange="addText('s', this.value); this.value='';">
                     <option value="">-- Quick S --</option>
@@ -116,8 +97,68 @@
                     <option value="Reports limited ROM and stiffness.">Stiffness / ROM</option>
                 </select>
                 <textarea id="s" placeholder="Client reports..."></textarea>
-
                 <label>O (Objective)</label>
                 <select onchange="addText('o', this.value); this.value='';">
                     <option value="">-- Quick O --</option>
                     <option value="Focused on releasing tension.">Release Tension</option>
+                    <option value="Adhesions addressed.">Adhesions</option>
+                    <option value="Hypertonicity palpated.">Hypertonicity</option>
+                    <option value="Trigger points released.">Trigger Points</option>
+                </select>
+                <textarea id="o" placeholder="Findings..."></textarea>
+                <label>A (Assessment - Tension 1-5)</label>
+                <select onchange="addText('a', 'Tension Found: ' + this.value + '/5.'); this.value='';">
+                    <option value="">-- Tension Scale --</option>
+                    <option value="1">1 - Minimal</option>
+                    <option value="2">2 - Mild</option>
+                    <option value="3">3 - Moderate</option>
+                    <option value="4">4 - High</option>
+                    <option value="5">5 - Extreme</option>
+                </select>
+                <textarea id="a" placeholder="Summary..."></textarea>
+                <label>P (Plan)</label>
+                <select onchange="addText('p', this.value); this.value='';">
+                    <option value="">-- Quick P --</option>
+                    <option value="Advised hydration.">Hydrate</option>
+                    <option value="Recommended stretching.">Stretch</option>
+                    <option value="Suggested Epsom salt soak.">Epsom Salt</option>
+                    <option value="Follow up scheduled.">Follow Up</option>
+                </select>
+                <textarea id="p" placeholder="Homework..."></textarea>
+                <button class="btn btn-save" onclick="saveNote()">SAVE SESSION</button>
+            </div>
+            <div id="history"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let db, currentId = null;
+
+    // STEP 1: VERIFY PIN AND ATTEMPT DB START
+    function checkPin() {
+        const val = document.getElementById('pinField').value;
+        if (val === '1234') {
+            console.log("PIN correct. Attempting to start database...");
+            initDB();
+        } else {
+            alert("Wrong PIN");
+        }
+    }
+
+    function initDB() {
+        // STEP 2: OPEN DATABASE WITH ERROR REPORTING
+        const req = indexedDB.open("ClinicDB_Final", 1);
+        
+        req.onupgradeneeded = e => {
+            let d = e.target.result;
+            if (!d.objectStoreNames.contains("clients")) d.createObjectStore("clients", {keyPath: "id", autoIncrement: true});
+            if (!d.objectStoreNames.contains("notes")) d.createObjectStore("notes", {keyPath: "id", autoIncrement: true}).createIndex("cId", "cId");
+        };
+
+        req.onsuccess = e => { 
+            db = e.target.result; 
+            console.log("Database connected successfully.");
+            // ONLY HIDE LOGIN SCREEN IF DB IS READY
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContent').style.display =
