@@ -13,6 +13,15 @@
         #clientList { flex-grow: 1; overflow-y: auto; }
         .sidebar-footer { padding: 15px 15px 90px 15px; border-top: 1px solid #eee; background: #fafafa; }
         #main { flex-grow: 1; padding: 20px; overflow-y: auto; height: 100vh; box-sizing: border-box; }
+        
+        /* MODAL STYLES */
+        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 600px; padding: 25px; border-radius: 12px; position: relative; max-height: 80vh; overflow-y: auto; }
+        .close-modal { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; color: var(--primary); font-weight: bold; }
+        
+        .history-card { background: #fff; padding: 15px; border-left: 5px solid var(--accent); margin-top: 10px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s; }
+        .history-card:active { background: #eef2f3; }
+
         .map-section { background: #eaeff2; padding: 15px; border-radius: 12px; margin-bottom: 20px; max-width: 850px; margin: 0 auto 20px auto; }
         .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .zone-col { display: flex; flex-direction: column; gap: 6px; }
@@ -33,15 +42,18 @@
 <div id="loginScreen">
     <div style="text-align: center;">
         <h2>Clinic Access</h2>
-        <input type="password" id="pinField" 
-               style="padding:15px; text-align:center; font-size:24px; border-radius:8px; width: 220px; border: 1px solid #ccc;" 
-               placeholder="PIN" 
-               inputmode="numeric" 
-               autocomplete="off"
-               onkeydown="if(event.key==='Enter') checkPin()">
+        <input type="password" id="pinField" style="padding:15px; text-align:center; font-size:24px; border-radius:8px; width: 220px; border: 1px solid #ccc;" placeholder="PIN" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter') checkPin()">
         <br>
         <button type="button" id="unlockBtn" class="btn" style="width:220px; margin-top:15px; background: var(--accent); color: white;" onclick="checkPin()">UNLOCK</button>
-        <p id="loadMsg" style="display:none; color:#3498db; margin-top:10px;">Connecting to database...</p>
+        <p id="loadMsg" style="display:none; color:#3498db; margin-top:10px;">Connecting...</p>
+    </div>
+</div>
+
+<div id="modalOverlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <h2 id="modalTitle" style="margin-top:0; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">Session Details</h2>
+        <div id="modalBody"></div>
     </div>
 </div>
 
@@ -140,57 +152,54 @@
 
 <script>
     let db, currentId = null;
-
     function checkPin() {
         const val = document.getElementById('pinField').value;
         if (val === '1234') {
             document.getElementById('loadMsg').style.display = 'block';
             document.getElementById('unlockBtn').innerText = 'Loading...';
             initDB();
-        } else { 
-            alert("Wrong PIN"); 
-        }
+        } else { alert("Wrong PIN"); }
     }
-
     function initDB() {
         const req = indexedDB.open("ClinicDB_Final", 1);
-        
         req.onupgradeneeded = e => {
             let d = e.target.result;
             if (!d.objectStoreNames.contains("clients")) d.createObjectStore("clients", {keyPath: "id", autoIncrement: true});
             if (!d.objectStoreNames.contains("notes")) d.createObjectStore("notes", {keyPath: "id", autoIncrement: true}).createIndex("cId", "cId");
         };
-
         req.onsuccess = e => { 
             db = e.target.result; 
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
             renderList(); 
         };
-
-        req.onerror = e => {
-            alert("DATABASE ERROR: Switch to a normal tab (not Incognito). Error Code: " + e.target.errorCode);
-        };
+        req.onerror = e => { alert("DB Error. Check if in Incognito."); };
     }
 
-    // MAP AND NOTE FUNCTIONS
-    function tapZone(zone) {
-        addText('s', zone + ":");
-        addText('o', zone + ":");
+    function openModal(noteJson) {
+        const n = JSON.parse(decodeURIComponent(noteJson));
+        document.getElementById('modalTitle').innerText = `Session: ${n.date}`;
+        document.getElementById('modalBody').innerHTML = `
+            <p><strong>S:</strong> ${n.s || "N/A"}</p>
+            <p><strong>O:</strong> ${n.o || "N/A"}</p>
+            <p><strong>A:</strong> ${n.a || "N/A"}</p>
+            <p><strong>P:</strong> ${n.p || "N/A"}</p>
+        `;
+        document.getElementById('modalOverlay').style.display = 'flex';
     }
-    function addText(id, text) {
-        const el = document.getElementById(id);
-        if (el) el.value += (el.value ? " " : "") + text;
+
+    function closeModal() {
+        document.getElementById('modalOverlay').style.display = 'none';
     }
+
+    function tapZone(zone) { addText('s', zone + ":"); addText('o', zone + ":"); }
+    function addText(id, text) { const el = document.getElementById(id); if (el) el.value += (el.value ? " " : "") + text; }
     function addClient() {
         const name = document.getElementById('newName').value;
         if (!name) return;
         const tx = db.transaction("clients", "readwrite");
         tx.objectStore("clients").add({name});
-        tx.oncomplete = () => {
-            document.getElementById('newName').value = "";
-            renderList();
-        };
+        tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
     }
     function renderList() {
         const list = document.getElementById('clientList');
@@ -213,51 +222,43 @@
         };
     }
     function deleteClient() {
-        if (!currentId) return;
-        if (confirm("Delete client and all history?")) {
-            const tx = db.transaction(["clients", "notes"], "readwrite");
-            tx.objectStore("clients").delete(currentId);
-            const notesStore = tx.objectStore("notes");
-            notesStore.index("cId").openCursor(IDBKeyRange.only(currentId)).onsuccess = e => {
-                const cursor = e.target.result;
-                if (cursor) { cursor.delete(); cursor.continue(); }
-            };
-            tx.oncomplete = () => {
-                currentId = null;
-                document.getElementById('clientView').style.display = 'none';
-                document.getElementById('deleteBtn').style.display = 'none';
-                renderList();
-            };
-        }
+        if (!currentId || !confirm("Delete client and all history?")) return;
+        const tx = db.transaction(["clients", "notes"], "readwrite");
+        tx.objectStore("clients").delete(currentId);
+        const notesStore = tx.objectStore("notes");
+        notesStore.index("cId").openCursor(IDBKeyRange.only(currentId)).onsuccess = e => {
+            const cursor = e.target.result; if (cursor) { cursor.delete(); cursor.continue(); }
+        };
+        tx.oncomplete = () => {
+            currentId = null;
+            document.getElementById('clientView').style.display = 'none';
+            document.getElementById('deleteBtn').style.display = 'none';
+            renderList();
+        };
     }
     function saveNote() {
         const n = { 
-            cId: currentId, 
-            date: new Date().toLocaleDateString(), 
-            s: document.getElementById('s').value, 
-            o: document.getElementById('o').value, 
-            a: document.getElementById('a').value,
-            p: document.getElementById('p').value 
+            cId: currentId, date: new Date().toLocaleDateString(), 
+            s: document.getElementById('s').value, o: document.getElementById('o').value, 
+            a: document.getElementById('a').value, p: document.getElementById('p').value 
         };
         const tx = db.transaction("notes", "readwrite");
         tx.objectStore("notes").add(n);
         tx.oncomplete = () => {
             ['s','o','a','p'].forEach(i => document.getElementById(i).value = "");
-            renderNotes();
-            alert("Saved");
+            renderNotes(); alert("Saved");
         };
     }
     function renderNotes() {
         const h = document.getElementById('history');
-        h.innerHTML = "<h3>Session History</h3>";
+        h.innerHTML = "<h3>Session History (Click to open)</h3>";
         db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
             e.target.result.reverse().forEach(n => {
-                h.innerHTML += `<div style="background:#fff; padding:12px; border-left:4px solid var(--accent); margin-top:10px; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                    <b>${n.date}</b><br>
-                    <small><b>S:</b> ${n.s}</small><br>
-                    <small><b>O:</b> ${n.o}</small><br>
-                    <small><b>A:</b> ${n.a}</small><br>
-                    <small><b>P:</b> ${n.p}</small>
+                const noteData = encodeURIComponent(JSON.stringify(n));
+                h.innerHTML += `
+                <div class="history-card" onclick="openModal('${noteData}')">
+                    <strong>${n.date}</strong><br>
+                    <small style="color:#666;">${n.s.substring(0, 50)}...</small>
                 </div>`;
             });
         };
