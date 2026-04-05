@@ -3,58 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Clinical Manager</title>
+    <title>Knead Clay Manager</title>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --success: #27ae60; --danger: #e74c3c; }
         body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; overflow: hidden; height: 100vh; }
+        
         #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; flex-direction: column; position: fixed; width: 100%; top: 0; left: 0; z-index: 1000; }
         #appContent { display: none; height: 100vh; flex-direction: row; width: 100%; }
-        #sidebar { width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; height: 100vh; flex-shrink: 0; }
+        
+        #sidebar { width: 280px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; height: 100vh; flex-shrink: 0; }
         #clientList { flex-grow: 1; overflow-y: auto; }
         .sidebar-footer { padding: 15px 15px 100px 15px; border-top: 1px solid #eee; background: #fafafa; }
+        
         #main { flex-grow: 1; height: 100vh; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         
+        /* BODY MAP - FULL BASICS */
         .map-section { background: #eaeff2; padding: 15px; border-radius: 12px; margin-bottom: 20px; max-width: 800px; margin: 0 auto 20px auto; }
-        .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .zone-col { display: flex; flex-direction: column; gap: 8px; }
-        .zone-btn { padding: 16px; background: white; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; }
-        
+        .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .zone-col { display: flex; flex-direction: column; gap: 6px; }
+        .zone-btn { padding: 14px; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; text-align: left; }
+        .zone-btn:active { background: var(--accent); color: white; }
+
+        /* SOAP CARD */
         .soap-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto 20px auto; }
-        textarea { width: 100%; height: 100px; border-radius: 8px; border: 1px solid #ccc; padding: 12px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
+        textarea { width: 100%; height: 90px; border-radius: 8px; border: 1px solid #ccc; padding: 12px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
         select { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 15px; }
         
         .btn { padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; font-size: 18px; }
         .btn-danger { background: var(--danger); color: white; width: 100%; font-size: 14px; margin-bottom: 10px; }
         
-        .history-card { background: #fff; padding: 15px; border-left: 5px solid var(--accent); margin-top: 10px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; max-width: 800px; margin: 10px auto; }
-        #history { padding-bottom: 300px; } /* Lift Fix */
+        /* HISTORY LIFT FIX */
+        .history-card { background: #fff; padding: 15px; border-left: 5px solid var(--accent); margin-top: 10px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; max-width: 800px; margin-left: auto; margin-right: auto; }
+        #history { padding-bottom: 350px; } 
 
-        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-content { background: white; width: 90%; max-width: 600px; padding: 25px; border-radius: 12px; position: relative; max-height: 85vh; overflow-y: auto; }
-        
-        .client-item { padding: 20px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 18px; }
+        .client-item { padding: 18px; border-bottom: 1px solid #eee; cursor: pointer; }
         .active-client { background: var(--accent) !important; color: white; }
-        label { font-weight: bold; color: #7f8c8d; display: block; margin-bottom: 5px; font-size: 12px; text-transform: uppercase; }
+        label { font-weight: bold; color: #7f8c8d; display: block; margin-bottom: 5px; font-size: 11px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div id="loginScreen">
     <div style="text-align: center;">
-        <h2>CLINIC ACCESS</h2>
+        <h2>KNEAD CLAY LMT</h2>
         <input type="password" id="pinField" style="padding:15px; text-align:center; font-size:24px; border-radius:8px; width: 220px;" placeholder="PIN" inputmode="numeric" onkeydown="if(event.key==='Enter') checkPin()">
         <br>
         <button class="btn" style="width:220px; margin-top:15px; background: var(--accent); color: white;" onclick="checkPin()">UNLOCK</button>
-    </div>
-</div>
-
-<div id="modalOverlay" onclick="closeModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <span onclick="closeModal()" style="position:absolute; top:15px; right:15px; font-size:24px; cursor:pointer;">&times;</span>
-        <h2 id="modalTitle">Edit Session</h2>
-        <div id="modalBody"></div>
-        <div id="modalFooter"></div>
     </div>
 </div>
 
@@ -63,7 +58,7 @@
         <div style="padding:15px; border-bottom:1px solid #eee;">
             <input type="text" id="searchBar" placeholder="Search..." oninput="renderList()" style="width:100%; padding:12px; border-radius: 5px; border: 1px solid #ddd;">
             <input type="text" id="newName" placeholder="Client Name" style="width:100%; padding:12px; margin-top:5px; border-radius: 5px; border: 1px solid #ddd;">
-            <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:5px;" onclick="addClient()">+ Add Client</button>
+            <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:5px;" onclick="addClient()">+ ADD CLIENT</button>
         </div>
         <div id="clientList"></div>
         <div class="sidebar-footer">
@@ -78,38 +73,42 @@
             <div class="map-section">
                 <div class="map-grid">
                     <div class="zone-col">
-                        <button class="zone-btn" onclick="tapZone('Neck')">Neck</button>
-                        <button class="zone-btn" onclick="tapZone('Pecs')">Pecs</button>
-                        <button class="zone-btn" onclick="tapZone('Shoulders')">Shoulders</button>
-                        <button class="zone-btn" onclick="tapZone('Quads')">Quads</button>
+                        <label>Front / Anterior</label>
+                        <button class="zone-btn" onclick="tapZone('Neck (Ant)')">Neck / SCM</button>
+                        <button class="zone-btn" onclick="tapZone('Pectorals')">Pectorals</button>
+                        <button class="zone-btn" onclick="tapZone('Biceps')">Biceps</button>
+                        <button class="zone-btn" onclick="tapZone('Abdominals')">Abdominals</button>
+                        <button class="zone-btn" onclick="tapZone('Quads')">Quadriceps</button>
+                        <button class="zone-btn" onclick="tapZone('Feet (Ant)')">Feet / Dorsum</button>
                     </div>
                     <div class="zone-col">
-                        <button class="zone-btn" onclick="tapZone('Traps')">Traps</button>
+                        <label>Back / Posterior</label>
+                        <button class="zone-btn" onclick="tapZone('Upper Back/Traps')">Traps / Upper Back</button>
+                        <button class="zone-btn" onclick="tapZone('Triceps')">Triceps</button>
                         <button class="zone-btn" onclick="tapZone('Low Back')">Low Back</button>
                         <button class="zone-btn" onclick="tapZone('Glutes')">Glutes</button>
                         <button class="zone-btn" onclick="tapZone('Hamstrings')">Hamstrings</button>
+                        <button class="zone-btn" onclick="tapZone('Calves')">Calves / Gastrocs</button>
                     </div>
                 </div>
             </div>
 
             <div class="soap-card">
-                <label>S - Subjective Findings</label>
+                <label>S - Subjective</label>
                 <select onchange="addText('s', this.value); this.value='';">
                     <option value="">-- Quick S-Notes --</option>
                     <option value="Reports dull ache.">Dull Ache</option>
                     <option value="Reports sharp pain.">Sharp Pain</option>
-                    <option value="Pain increases with movement.">Pain w/ Motion</option>
                     <option value="Improved since last session.">Improved</option>
                 </select>
                 <textarea id="s"></textarea>
                 
-                <label>O - Objective Findings</label>
+                <label>O - Objective</label>
                 <select onchange="addText('o', this.value); this.value='';">
                     <option value="">-- Quick O-Notes --</option>
                     <option value="Hypertonicity noted.">Hypertonicity</option>
-                    <option value="Trigger points found.">Trigger Points</option>
+                    <option value="Active trigger points.">Trigger Points</option>
                     <option value="Reduced ROM.">Reduced ROM</option>
-                    <option value="Fascial restrictions present.">Fascial Restrict.</option>
                 </select>
                 <textarea id="o"></textarea>
                 
@@ -122,31 +121,30 @@
                 </select>
                 <textarea id="a"></textarea>
                 
-                <label>P - Plan & Homework</label>
+                <label>P - Plan</label>
                 <select onchange="addText('p', this.value); this.value='';">
                     <option value="">-- Quick P-Notes --</option>
-                    <option value="Suggested increase in water intake.">Hydrate</option>
-                    <option value="Recommended daily stretching.">Daily Stretch</option>
+                    <option value="Recommended stretching.">Stretching</option>
+                    <option value="Suggested hydration.">Hydration</option>
                     <option value="Follow up in 1 week.">1 Week Follow-up</option>
-                    <option value="Focus on postural awareness.">Postural Focus</option>
                 </select>
                 <textarea id="p"></textarea>
                 
                 <button class="btn btn-save" onclick="saveNote()">SAVE SESSION</button>
             </div>
             
-            <h3 style="text-align:center;">History</h3>
+            <h3 style="text-align:center;">Session History</h3>
             <div id="history"></div>
         </div>
     </div>
 </div>
 
 <script>
-    let db, currentId = null, editingNoteId = null;
+    let db, currentId = null;
 
     function checkPin() {
         if (document.getElementById('pinField').value === '1234') initDB();
-        else alert("Wrong PIN");
+        else { alert("Wrong PIN"); document.getElementById('pinField').value = ""; }
     }
 
     function initDB() {
@@ -199,51 +197,11 @@
         if (!currentId) return;
         db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
             e.target.result.sort((a, b) => b.id - a.id).forEach(n => {
-                const noteData = encodeURIComponent(JSON.stringify(n));
-                h.innerHTML += `<div class="history-card" onclick="openModal('${noteData}')">
-                    <strong>${n.date}</strong><br>
-                    <small>${n.s.substring(0, 50)}...</small>
-                </div>`;
+                h.innerHTML += `<div class="history-card"><strong>${n.date}</strong><br><small>${n.s}</small></div>`;
             });
         };
     }
 
-    function openModal(noteJson) {
-        const n = JSON.parse(decodeURIComponent(noteJson));
-        editingNoteId = n.id;
-        document.getElementById('modalTitle').innerText = `Edit: ${n.date}`;
-        document.getElementById('modalBody').innerHTML = `
-            <textarea id="editS">${n.s}</textarea><textarea id="editO">${n.o}</textarea>
-            <textarea id="editA">${n.a}</textarea><textarea id="editP">${n.p}</textarea>`;
-        document.getElementById('modalFooter').innerHTML = `
-            <button class="btn btn-save" onclick="updateNote()">SAVE</button>
-            <button class="btn btn-danger" style="margin-top:10px; width:100%;" onclick="deleteNote(${n.id})">DELETE</button>`;
-        document.getElementById('modalOverlay').style.display = 'flex';
-    }
-
-    function updateNote() {
-        const tx = db.transaction("notes", "readwrite");
-        const store = tx.objectStore("notes");
-        store.get(editingNoteId).onsuccess = e => {
-            const data = e.target.result;
-            data.s = document.getElementById('editS').value;
-            data.o = document.getElementById('editO').value;
-            data.a = document.getElementById('editA').value;
-            data.p = document.getElementById('editP').value;
-            store.put(data);
-        };
-        tx.oncomplete = () => { closeModal(); renderNotes(); };
-    }
-
-    function deleteNote(id) {
-        if(confirm("Delete note?")) {
-            const tx = db.transaction("notes", "readwrite");
-            tx.objectStore("notes").delete(id);
-            tx.oncomplete = () => { closeModal(); renderNotes(); };
-        }
-    }
-
-    function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
     function addClient() {
         const name = document.getElementById('newName').value;
         if (!name) return;
@@ -251,6 +209,7 @@
         tx.objectStore("clients").add({name});
         tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
     }
+
     function deleteClient() {
         if (!currentId || !confirm("Delete client?")) return;
         const tx = db.transaction(["clients", "notes"], "readwrite");
