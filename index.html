@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="data:application/json,{'display':'standalone','name':'Clinical Manager'}">
+    <title>Clinical Manager</title>
+    <style>
+        /* Hidden until PIN is correct */
+        #appContent { display: none; }
+        #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; background: #2c3e50; color: white; flex-direction: column; }
+        .pin-input { padding: 15px; font-size: 24px; width: 150px; text-align: center; border-radius: 8px; border: none; margin-bottom: 10px; }
+        /* Existing Styles */
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --success: #27ae60; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; overflow: hidden; }
+        #container { display: flex; height: 100vh; }
+        #sidebar { width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+        #main { flex-grow: 1; padding: 20px; overflow-y: auto; }
+        .client-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .active { background: var(--accent); color: white; }
+        textarea { width: 100%; height: 80px; margin: 10px 0; border-radius: 6px; border: 1px solid #ddd; padding: 10px; }
+        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; background: var(--accent); color: white; }
+    </style>
+</head>
+<body>
+
+<div id="loginScreen">
+    <h2>Enter Clinic PIN</h2>
+    <input type="password" id="pinField" class="pin-input" placeholder="****" inputmode="numeric">
+    <button class="btn" style="width:160px;" onclick="checkPin()">Unlock</button>
+</div>
+
+<div id="appContent">
+    <div id="container">
+        <div id="sidebar">
+            <div style="padding:15px; border-bottom:1px solid #eee;">
+                <input type="text" id="newName" placeholder="New Client Name...">
+                <button class="btn" onclick="addClient()" style="margin-top:10px;">+ Create File</button>
+            </div>
+            <div id="list"></div>
+        </div>
+        <div id="main">
+            <div id="view" style="display:none;">
+                <h2 id="title">Client</h2>
+                <textarea id="s" placeholder="Subjective"></textarea>
+                <textarea id="o" placeholder="Objective"></textarea>
+                <textarea id="a" placeholder="Assessment"></textarea>
+                <textarea id="p" placeholder="Plan"></textarea>
+                <button class="btn" style="background:var(--success)" onclick="saveNote()">Save SOAP Note</button>
+                <div id="history"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- PIN SYSTEM (Change '1234' to your own) ---
+    function checkPin() {
+        if (document.getElementById('pinField').value === '1234') {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'block';
+            initDB();
+        } else { alert('Incorrect PIN'); }
+    }
+
+    // --- DATABASE & LOGIC ---
+    let db, currentId = null;
+    function initDB() {
+        const req = indexedDB.open("ClinicDB_v2", 1);
+        req.onupgradeneeded = e => {
+            let d = e.target.result;
+            d.createObjectStore("clients", {keyPath: "id", autoIncrement: true});
+            d.createObjectStore("notes", {keyPath: "id", autoIncrement: true}).createIndex("cId", "cId");
+        };
+        req.onsuccess = e => { db = e.target.result; renderList(); };
+    }
+
+    function addClient() {
+        const name = document.getElementById('newName').value;
+        if (!name) return;
+        db.transaction("clients", "readwrite").objectStore("clients").add({name}).onsuccess = () => {
+            document.getElementById('newName').value = "";
+            renderList();
+        };
+    }
+
+    function renderList() {
+        const list = document.getElementById('list');
+        list.innerHTML = "";
+        db.transaction("clients").objectStore("clients").getAll().onsuccess = e => {
+            e.target.result.forEach(c => {
+                const d = document.createElement('div');
+                d.className = `client-item ${currentId === c.id ? 'active' : ''}`;
+                d.innerText = c.name;
+                d.onclick = () => { currentId = c.id; document.getElementById('view').style.display='block'; document.getElementById('title').innerText=c.name; renderNotes(); };
+                list.appendChild(d);
+            });
+        };
+    }
+
+    function saveNote() {
+        const n = { cId: currentId, date: new Date().toLocaleDateString(), s: document.getElementById('s').value, o: document.getElementById('o').value, a: document.getElementById('a').value, p: document.getElementById('p').value };
+        db.transaction("notes", "readwrite").objectStore("notes").add(n).onsuccess = () => {
+            ['s','o','a','p'].forEach(i => document.getElementById(i).value = "");
+            renderNotes();
+            alert("Saved");
+        };
+    }
+
+    function renderNotes() {
+        const h = document.getElementById('history');
+        h.innerHTML = "<h3>History</h3>";
+        db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
+            e.target.result.reverse().forEach(n => {
+                h.innerHTML += `<div style="border-bottom:1px solid #ddd; padding:10px;"><b>${n.date}</b><br>S: ${n.s}<br>O: ${n.o}</div>`;
+            });
+        };
+    }
+</script>
+</body>
+</html>
