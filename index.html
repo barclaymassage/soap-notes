@@ -7,31 +7,45 @@
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --success: #27ae60; --danger: #e74c3c; }
         body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; overflow: hidden; height: 100vh; }
+        
         #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; flex-direction: column; position: fixed; width: 100%; top: 0; left: 0; z-index: 1000; }
         #appContent { display: none; height: 100vh; flex-direction: row; width: 100%; }
-        #sidebar { width: 320px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; height: 100vh; }
+        
+        #sidebar { width: 280px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; height: 100vh; flex-shrink: 0; }
         #clientList { flex-grow: 1; overflow-y: auto; }
-        .sidebar-footer { padding: 15px 15px 90px 15px; border-top: 1px solid #eee; background: #fafafa; }
-        #main { flex-grow: 1; padding: 20px; overflow-y: auto; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; }
+        .sidebar-footer { padding: 15px 15px 100px 15px; border-top: 1px solid #eee; background: #fafafa; }
         
-        #history { margin-top: 20px; border-top: 2px solid #ddd; padding-top: 10px; flex-grow: 1; overflow-y: auto; min-height: 200px; padding-bottom: 50px; }
-        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-content { background: white; width: 90%; max-width: 600px; padding: 25px; border-radius: 12px; position: relative; max-height: 80vh; overflow-y: auto; }
-        .close-modal { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; color: var(--primary); }
-        .history-card { background: #fff; padding: 15px; border-left: 5px solid var(--accent); margin-top: 10px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
+        #main { flex-grow: 1; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        #workspace { display: flex; flex-direction: row; flex-grow: 1; overflow: hidden; }
         
-        .map-section { background: #eaeff2; padding: 15px; border-radius: 12px; margin-bottom: 20px; max-width: 850px; width: 100%; align-self: center; }
-        .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .zone-col { display: flex; flex-direction: column; gap: 6px; }
-        .zone-btn { padding: 14px; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; color: var(--primary); }
-        .soap-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 850px; width: 100%; align-self: center; }
-        textarea { width: 100%; height: 90px; border-radius: 8px; border: 1px solid #ccc; padding: 10px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
-        select { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 16px; }
+        /* INPUT COLUMN */
+        #inputArea { width: 55%; padding: 20px; overflow-y: auto; border-right: 1px solid #ddd; background: #f9f9f9; }
+        
+        /* HISTORY COLUMN - WITH THE FIX */
+        #historyArea { width: 45%; padding: 20px; overflow-y: auto; background: white; }
+        
+        /* THE "RAISE UP" FIX: This adds empty space at the very bottom of the history list */
+        #historyContainer { padding-bottom: 200px; } 
+
+        .history-card { background: #fff; padding: 15px; border-left: 5px solid var(--accent); margin-bottom: 12px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #eee; }
+        .map-section { background: #eaeff2; padding: 12px; border-radius: 10px; margin-bottom: 15px; }
+        .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .zone-btn { padding: 12px; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin-bottom: 5px; width: 100%; }
+        
+        .soap-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; }
+        textarea { width: 100%; height: 85px; border-radius: 6px; border: 1px solid #ccc; padding: 10px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; resize: none; }
+        select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ddd; background: #fff; font-size: 16px; }
+        
         .btn { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; font-size: 18px; }
-        .btn-danger { background: var(--danger); color: white; width: 100%; font-size: 14px; margin-bottom: 10px; }
-        .client-item { padding: 20px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .btn-danger { background: var(--danger); color: white; width: 100%; font-size: 14px; }
+        
+        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 600px; padding: 25px; border-radius: 12px; position: relative; max-height: 80vh; overflow-y: auto; }
+        
+        .client-item { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; }
         .active-client { background: var(--accent) !important; color: white; }
+        label { font-weight: bold; font-size: 12px; color: #7f8c8d; display: block; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -39,18 +53,16 @@
 <div id="loginScreen">
     <div style="text-align: center;">
         <h2>Clinic Access</h2>
-        <input type="password" id="pinField" style="padding:15px; text-align:center; font-size:24px; border-radius:8px; width: 220px; border: 1px solid #ccc;" placeholder="PIN" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter') checkPin()">
+        <input type="password" id="pinField" style="padding:15px; text-align:center; font-size:24px; border-radius:8px; width: 220px; border: 1px solid #ccc;" placeholder="PIN" inputmode="numeric">
         <br>
-        <button type="button" id="unlockBtn" class="btn" style="width:220px; margin-top:15px; background: var(--accent); color: white;" onclick="checkPin()">UNLOCK</button>
-        <p id="loadMsg" style="display:none; color:#3498db; margin-top:10px;">Connecting...</p>
-        <button onclick="location.reload()" style="margin-top:20px; background:none; border:none; color:white; text-decoration:underline; font-size:12px;">App not loading? Refresh Page</button>
+        <button type="button" class="btn" style="width:220px; margin-top:15px; background: var(--accent); color: white;" onclick="checkPin()">UNLOCK</button>
     </div>
 </div>
 
 <div id="modalOverlay" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <span class="close-modal" onclick="closeModal()">&times;</span>
-        <h2 id="modalTitle" style="margin-top:0; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">Session Details</h2>
+        <span onclick="closeModal()" style="position:absolute; top:15px; right:15px; font-size:24px; cursor:pointer;">&times;</span>
+        <h2 id="modalTitle">Session Details</h2>
         <div id="modalBody"></div>
         <div id="modalFooter"></div>
     </div>
@@ -59,67 +71,62 @@
 <div id="appContent">
     <div id="sidebar">
         <div style="padding:15px; border-bottom:1px solid #eee;">
-            <input type="text" id="searchBar" placeholder="Search..." oninput="renderList()" style="width:100%; padding:12px; margin-bottom:8px; border-radius: 5px; border: 1px solid #ddd;">
-            <input type="text" id="newName" placeholder="New Client Name" style="width:100%; padding:12px; border-radius: 5px; border: 1px solid #ddd;">
-            <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:5px;" onclick="addClient()">+ Add Client</button>
+            <input type="text" id="searchBar" placeholder="Search..." oninput="renderList()" style="width:100%; padding:10px; margin-bottom:8px; border-radius: 5px; border: 1px solid #ddd;">
+            <input type="text" id="newName" placeholder="New Client Name" style="width:100%; padding:10px; border-radius: 5px; border: 1px solid #ddd;">
+            <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:5px; padding:10px;" onclick="addClient()">+ Add Client</button>
         </div>
         <div id="clientList"></div>
         <div class="sidebar-footer">
             <button id="deleteBtn" class="btn btn-danger" style="display:none; width:100%;" onclick="deleteClient()">DELETE CLIENT</button>
-            <button class="btn" style="width:100%; font-size:11px; background:#ccc;" onclick="exportData()">💾 BACKUP ALL DATA</button>
         </div>
     </div>
+
     <div id="main">
-        <div id="clientView" style="display:none; display: flex; flex-direction: column; height: 100%;">
-            <h1 id="activeTitle" style="margin-top:0;">Client</h1>
-            <div class="map-section">
-                <div class="map-grid">
-                    <div class="zone-col">
-                        <span style="font-size:10px; text-align:center; font-weight:bold; color:#7f8c8d;">ANTERIOR (FRONT)</span>
-                        <button class="zone-btn" onclick="tapZone('Neck (Ant)')">Neck</button>
-                        <button class="zone-btn" onclick="tapZone('Pecs')">Pecs/Chest</button>
-                        <button class="zone-btn" onclick="tapZone('Deltoids (Ant)')">Shoulders</button>
-                        <button class="zone-btn" onclick="tapZone('Abs/Psoas')">Abs/Psoas</button>
-                        <button class="zone-btn" onclick="tapZone('Forearms (Flex)')">Forearms</button>
-                        <button class="zone-btn" onclick="tapZone('Quads')">Quads</button>
-                        <button class="zone-btn" onclick="tapZone('Tibialis Ant')">Shins</button>
+        <div id="clientView" style="display:none; height: 100%; flex-direction: column;">
+            <div style="padding:15px 25px; background:white; border-bottom:1px solid #ddd;">
+                <h1 id="activeTitle" style="margin:0;">Client</h1>
+            </div>
+            
+            <div id="workspace">
+                <div id="inputArea">
+                    <div class="map-section">
+                        <div class="map-grid">
+                            <div>
+                                <button class="zone-btn" onclick="tapZone('Neck')">Neck</button>
+                                <button class="zone-btn" onclick="tapZone('Shoulders')">Shoulders</button>
+                                <button class="zone-btn" onclick="tapZone('Pecs')">Pecs</button>
+                            </div>
+                            <div>
+                                <button class="zone-btn" onclick="tapZone('Low Back')">Low Back</button>
+                                <button class="zone-btn" onclick="tapZone('Glutes')">Glutes</button>
+                                <button class="zone-btn" onclick="tapZone('Quads')">Quads</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="zone-col">
-                        <span style="font-size:10px; text-align:center; font-weight:bold; color:#7f8c8d;">POSTERIOR (BACK)</span>
-                        <button class="zone-btn" onclick="tapZone('Upper Traps')">Upper Traps</button>
-                        <button class="zone-btn" onclick="tapZone('Rhomboids/Scap')">Rhomboids/Scapula</button>
-                        <button class="zone-btn" onclick="tapZone('Lats')">Lats</button>
-                        <button class="zone-btn" onclick="tapZone('Erectors/Low Back')">Low Back</button>
-                        <button class="zone-btn" onclick="tapZone('Glutes')">Glutes</button>
-                        <button class="zone-btn" onclick="tapZone('Hamstrings')">Hamstrings</button>
-                        <button class="zone-btn" onclick="tapZone('Calves')">Calves</button>
+
+                    <div class="soap-card">
+                        <label>S / O</label>
+                        <textarea id="s" placeholder="Subjective reports..."></textarea>
+                        <textarea id="o" placeholder="Objective findings..."></textarea>
+                        <label>A (Tension 1-5)</label>
+                        <select onchange="addText('a', 'Tension: ' + this.value + '/5'); this.value='';">
+                            <option value="">-- Scale --</option>
+                            <option value="1">1 - Minimal</option>
+                            <option value="3">3 - Moderate</option>
+                            <option value="5">5 - Extreme</option>
+                        </select>
+                        <textarea id="a"></textarea>
+                        <label>P (Homework)</label>
+                        <textarea id="p"></textarea>
+                        <button class="btn btn-save" onclick="saveNote()">SAVE SESSION</button>
                     </div>
                 </div>
+
+                <div id="historyArea">
+                    <h3 style="margin-top:0;">History</h3>
+                    <div id="historyContainer"></div>
+                </div>
             </div>
-            <div class="soap-card">
-                <label>Treatment Type</label>
-                <select onchange="addText('a', 'Type: ' + this.value); this.value='';">
-                    <option value="">-- Select Type --</option>
-                    <option value="Relaxation">Relaxation</option>
-                    <option value="Therapeutic">Therapeutic</option>
-                    <option value="Deep Tissue">Deep Tissue</option>
-                    <option value="Injury Recovery">Injury Recovery</option>
-                </select>
-                <textarea id="s" placeholder="S: Subjective..."></textarea>
-                <textarea id="o" placeholder="O: Objective..."></textarea>
-                <select onchange="addText('a', 'Tension Found: ' + this.value + '/5.'); this.value='';">
-                    <option value="">-- Tension Scale --</option>
-                    <option value="1">1 - Minimal</option>
-                    <option value="2">2 - Mild</option>
-                    <option value="3">3 - Moderate</option>
-                    <option value="4">4 - High</option>
-                    <option value="5">5 - Extreme</option>
-                </select>
-                <textarea id="a" placeholder="A: Assessment..."></textarea>
-                <textarea id="p" placeholder="P: Plan..."></textarea>
-                <button class="btn btn-save" onclick="saveNote()">SAVE SESSION</button>
-            </div>
-            <div id="history"></div>
         </div>
     </div>
 </div>
@@ -128,62 +135,52 @@
     let db, currentId = null, editingNoteId = null;
 
     function checkPin() {
-        if (document.getElementById('pinField').value === '1234') {
-            document.getElementById('loadMsg').style.display = 'block';
-            document.getElementById('unlockBtn').innerText = 'Opening...';
-            initDB();
-        } else { alert("Wrong PIN"); }
+        if (document.getElementById('pinField').value === '1234') initDB();
+        else alert("Wrong PIN");
     }
 
     function initDB() {
-        // Version 3 to force a clean slate for the index
         const req = indexedDB.open("ClinicDB_Final", 3);
-        
-        req.onblocked = () => {
-            alert("Database blocked. Please close other tabs of this app and try again.");
-            location.reload();
-        };
-
         req.onupgradeneeded = e => {
             let d = e.target.result;
             if (!d.objectStoreNames.contains("clients")) d.createObjectStore("clients", {keyPath: "id", autoIncrement: true});
-            if (!d.objectStoreNames.contains("notes")) {
-                let s = d.createObjectStore("notes", {keyPath: "id", autoIncrement: true});
-                s.createIndex("cId", "cId");
-            } else {
-                let s = e.target.transaction.objectStore("notes");
-                if (!s.indexNames.contains("cId")) s.createIndex("cId", "cId");
-            }
+            if (!d.objectStoreNames.contains("notes")) d.createObjectStore("notes", {keyPath: "id", autoIncrement: true}).createIndex("cId", "cId");
         };
-
         req.onsuccess = e => { 
             db = e.target.result; 
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
             renderList(); 
         };
-        
-        req.onerror = () => alert("Storage Error. Check if Private Browsing is blocking IndexedDB.");
+    }
+
+    function renderNotes() {
+        const h = document.getElementById('historyContainer');
+        h.innerHTML = "";
+        if (!currentId) return;
+        db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
+            e.target.result.sort((a, b) => b.id - a.id).forEach(n => {
+                const noteData = encodeURIComponent(JSON.stringify(n));
+                h.innerHTML += `<div class="history-card" onclick="openModal('${noteData}')">
+                    <strong>${n.date}</strong><br>
+                    <small style="color:#666;">${n.s.substring(0, 40)}...</small>
+                </div>`;
+            });
+        };
     }
 
     function openModal(noteJson) {
         const n = JSON.parse(decodeURIComponent(noteJson));
         editingNoteId = n.id;
-        document.getElementById('modalTitle').innerText = `Session: ${n.date}`;
+        document.getElementById('modalTitle').innerText = `Edit: ${n.date}`;
         document.getElementById('modalBody').innerHTML = `
-            <label>S</label><textarea id="editS">${n.s}</textarea>
-            <label>O</label><textarea id="editO">${n.o}</textarea>
-            <label>A</label><textarea id="editA">${n.a}</textarea>
-            <label>P</label><textarea id="editP">${n.p}</textarea>
-        `;
+            <textarea id="editS">${n.s}</textarea><textarea id="editO">${n.o}</textarea>
+            <textarea id="editA">${n.a}</textarea><textarea id="editP">${n.p}</textarea>`;
         document.getElementById('modalFooter').innerHTML = `
-            <button class="btn btn-save" onclick="updateNote()">SAVE CHANGES</button>
-            <button class="btn btn-danger" style="margin-top:10px; width:100%;" onclick="deleteNote(${n.id})">DELETE ACCIDENTAL NOTE</button>
-        `;
+            <button class="btn btn-save" onclick="updateNote()">SAVE</button>
+            <button class="btn btn-danger" style="margin-top:10px; width:100%;" onclick="deleteNote(${n.id})">DELETE</button>`;
         document.getElementById('modalOverlay').style.display = 'flex';
     }
-
-    function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
     function updateNote() {
         const tx = db.transaction("notes", "readwrite");
@@ -200,16 +197,16 @@
     }
 
     function deleteNote(id) {
-        if(confirm("Permanently delete this accidental note?")) {
+        if(confirm("Delete note?")) {
             const tx = db.transaction("notes", "readwrite");
             tx.objectStore("notes").delete(id);
             tx.oncomplete = () => { closeModal(); renderNotes(); };
         }
     }
 
+    function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
     function tapZone(zone) { addText('s', zone + ":"); addText('o', zone + ":"); }
     function addText(id, text) { const el = document.getElementById(id); if (el) el.value += (el.value ? " " : "") + text; }
-
     function addClient() {
         const name = document.getElementById('newName').value;
         if (!name) return;
@@ -217,7 +214,6 @@
         tx.objectStore("clients").add({name});
         tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
     }
-
     function renderList() {
         const list = document.getElementById('clientList');
         const search = document.getElementById('searchBar').value.toLowerCase();
@@ -232,18 +228,6 @@
             });
         };
     }
-
-    function deleteClient() {
-        if (!currentId || !confirm("Delete client and all history?")) return;
-        const tx = db.transaction(["clients", "notes"], "readwrite");
-        tx.objectStore("clients").delete(currentId);
-        const notesStore = tx.objectStore("notes");
-        notesStore.index("cId").openCursor(IDBKeyRange.only(currentId)).onsuccess = e => {
-            const cursor = e.target.result; if (cursor) { cursor.delete(); cursor.continue(); }
-        };
-        tx.oncomplete = () => { currentId = null; document.getElementById('clientView').style.display = 'none'; document.getElementById('deleteBtn').style.display = 'none'; renderList(); };
-    }
-
     function saveNote() {
         const n = { 
             cId: currentId, date: new Date().toLocaleDateString(), 
@@ -253,28 +237,6 @@
         const tx = db.transaction("notes", "readwrite");
         tx.objectStore("notes").add(n);
         tx.oncomplete = () => { ['s','o','a','p'].forEach(i => document.getElementById(i).value = ""); renderNotes(); alert("Saved"); };
-    }
-
-    function renderNotes() {
-        const h = document.getElementById('history');
-        h.innerHTML = "<h3>Session History (Click to Edit)</h3>";
-        if (!currentId) return;
-        db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
-            e.target.result.sort((a, b) => b.id - a.id).forEach(n => {
-                const noteData = encodeURIComponent(JSON.stringify(n));
-                h.innerHTML += `<div class="history-card" onclick="openModal('${noteData}')"><strong>${n.date}</strong><br><small>${n.s.substring(0, 40)}...</small></div>`;
-            });
-        };
-    }
-
-    async function exportData() {
-        const clients = await new Promise(r => db.transaction("clients").objectStore("clients").getAll().onsuccess = e => r(e.target.result));
-        const notes = await new Promise(r => db.transaction("notes").objectStore("notes").getAll().onsuccess = e => r(e.target.result));
-        const blob = new Blob([JSON.stringify({clients, notes})], {type: "application/json"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `Clinical_Backup.json`;
-        a.click();
     }
 </script>
 </body>
