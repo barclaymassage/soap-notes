@@ -17,25 +17,26 @@
         
         #main { flex-grow: 1; height: 100vh; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         
-        /* BODY MAP - FULL BASICS */
         .map-section { background: #eaeff2; padding: 15px; border-radius: 12px; margin-bottom: 20px; max-width: 800px; margin: 0 auto 20px auto; }
         .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .zone-col { display: flex; flex-direction: column; gap: 6px; }
         .zone-btn { padding: 14px; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; text-align: left; }
         .zone-btn:active { background: var(--accent); color: white; }
 
-        /* SOAP CARD */
         .soap-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto 20px auto; }
         textarea { width: 100%; height: 90px; border-radius: 8px; border: 1px solid #ccc; padding: 12px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
         select { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 15px; }
         
         .btn { padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; font-size: 18px; }
-        .btn-danger { background: var(--danger); color: white; width: 100%; font-size: 14px; margin-bottom: 10px; }
+        .btn-danger { background: var(--danger); color: white; width: 100%; font-size: 14px; }
         
-        /* HISTORY LIFT FIX */
+        /* MODAL STYLES */
+        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 600px; padding: 25px; border-radius: 12px; position: relative; max-height: 85vh; overflow-y: auto; }
+
         .history-card { background: #fff; padding: 15px; border-left: 5px solid var(--accent); margin-top: 10px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; max-width: 800px; margin-left: auto; margin-right: auto; }
-        #history { padding-bottom: 350px; } 
+        #history { padding-bottom: 400px; } /* LIFT FIX */
 
         .client-item { padding: 18px; border-bottom: 1px solid #eee; cursor: pointer; }
         .active-client { background: var(--accent) !important; color: white; }
@@ -50,6 +51,15 @@
         <input type="password" id="pinField" style="padding:15px; text-align:center; font-size:24px; border-radius:8px; width: 220px;" placeholder="PIN" inputmode="numeric" onkeydown="if(event.key==='Enter') checkPin()">
         <br>
         <button class="btn" style="width:220px; margin-top:15px; background: var(--accent); color: white;" onclick="checkPin()">UNLOCK</button>
+    </div>
+</div>
+
+<div id="modalOverlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span onclick="closeModal()" style="position:absolute; top:15px; right:15px; font-size:24px; cursor:pointer;">&times;</span>
+        <h2 id="modalTitle">Session Details</h2>
+        <div id="modalBody"></div>
+        <div id="modalFooter"></div>
     </div>
 </div>
 
@@ -130,92 +140,4 @@
                 </select>
                 <textarea id="p"></textarea>
                 
-                <button class="btn btn-save" onclick="saveNote()">SAVE SESSION</button>
-            </div>
-            
-            <h3 style="text-align:center;">Session History</h3>
-            <div id="history"></div>
-        </div>
-    </div>
-</div>
-
-<script>
-    let db, currentId = null;
-
-    function checkPin() {
-        if (document.getElementById('pinField').value === '1234') initDB();
-        else { alert("Wrong PIN"); document.getElementById('pinField').value = ""; }
-    }
-
-    function initDB() {
-        const req = indexedDB.open("ClinicDB_Final", 3);
-        req.onupgradeneeded = e => {
-            let d = e.target.result;
-            if (!d.objectStoreNames.contains("clients")) d.createObjectStore("clients", {keyPath: "id", autoIncrement: true});
-            if (!d.objectStoreNames.contains("notes")) d.createObjectStore("notes", {keyPath: "id", autoIncrement: true}).createIndex("cId", "cId");
-        };
-        req.onsuccess = e => { 
-            db = e.target.result; 
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appContent').style.display = 'flex';
-            renderList(); 
-        };
-    }
-
-    function tapZone(zone) { addText('s', zone + ":"); addText('o', zone + ":"); }
-    function addText(id, text) { const el = document.getElementById(id); if (el) el.value += (el.value ? " " : "") + text; }
-
-    function renderList() {
-        const list = document.getElementById('clientList');
-        const search = document.getElementById('searchBar').value.toLowerCase();
-        list.innerHTML = "";
-        db.transaction("clients").objectStore("clients").getAll().onsuccess = e => {
-            e.target.result.filter(c => c.name.toLowerCase().includes(search)).forEach(c => {
-                const div = document.createElement('div');
-                div.className = `client-item ${currentId === c.id ? 'active-client' : ''}`;
-                div.innerText = c.name;
-                div.onclick = () => { currentId = c.id; document.getElementById('clientView').style.display='block'; document.getElementById('deleteBtn').style.display='block'; document.getElementById('activeTitle').innerText=c.name; renderList(); renderNotes(); };
-                list.appendChild(div);
-            });
-        };
-    }
-
-    function saveNote() {
-        const n = { 
-            cId: currentId, date: new Date().toLocaleDateString(), 
-            s: document.getElementById('s').value, o: document.getElementById('o').value, 
-            a: document.getElementById('a').value, p: document.getElementById('p').value 
-        };
-        const tx = db.transaction("notes", "readwrite");
-        tx.objectStore("notes").add(n);
-        tx.oncomplete = () => { ['s','o','a','p'].forEach(i => document.getElementById(i).value = ""); renderNotes(); alert("Saved"); };
-    }
-
-    function renderNotes() {
-        const h = document.getElementById('history');
-        h.innerHTML = "";
-        if (!currentId) return;
-        db.transaction("notes").objectStore("notes").index("cId").getAll(IDBKeyRange.only(currentId)).onsuccess = e => {
-            e.target.result.sort((a, b) => b.id - a.id).forEach(n => {
-                h.innerHTML += `<div class="history-card"><strong>${n.date}</strong><br><small>${n.s}</small></div>`;
-            });
-        };
-    }
-
-    function addClient() {
-        const name = document.getElementById('newName').value;
-        if (!name) return;
-        const tx = db.transaction("clients", "readwrite");
-        tx.objectStore("clients").add({name});
-        tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
-    }
-
-    function deleteClient() {
-        if (!currentId || !confirm("Delete client?")) return;
-        const tx = db.transaction(["clients", "notes"], "readwrite");
-        tx.objectStore("clients").delete(currentId);
-        tx.oncomplete = () => { currentId = null; document.getElementById('clientView').style.display = 'none'; renderList(); };
-    }
-</script>
-</body>
-</html>
+                <button class="btn btn-save" onclick="saveNote()">
