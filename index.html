@@ -7,59 +7,52 @@
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --success: #27ae60; --danger: #e74c3c; }
         body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; overflow: hidden; height: 100vh; }
-        
         #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; flex-direction: column; position: fixed; width: 100%; top: 0; left: 0; z-index: 1000; }
         #appContent { display: none; height: 100vh; flex-direction: row; width: 100%; }
-        
         #sidebar { width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; height: 100vh; flex-shrink: 0; }
         #clientList { flex-grow: 1; overflow-y: auto; }
         .sidebar-footer { padding: 15px 15px 100px 15px; border-top: 1px solid #eee; background: #fafafa; }
+        #main { flex-grow: 1; height: 100vh; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         
-        #main { flex-grow: 1; height: 100vh; overflow-y: auto; padding: 20px; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
-        
-        /* BODY MAP GRID */
-        .map-section { background: #eaeff2; padding: 15px; border-radius: 12px; margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto; }
+        .map-section { background: #eaeff2; padding: 15px; border-radius: 12px; margin-bottom: 20px; max-width: 800px; margin: 0 auto 20px auto; }
         .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .zone-col { display: flex; flex-direction: column; gap: 8px; }
-        .zone-btn { padding: 16px; background: white; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .zone-btn:active { background: var(--accent); color: white; transform: scale(0.98); }
-
-        /* SOAP CARD */
+        .zone-btn { padding: 16px; background: white; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; }
+        
         .soap-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto 20px auto; }
-        textarea { width: 100%; height: 110px; border-radius: 8px; border: 1px solid #ccc; padding: 12px; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; font-family: inherit; }
-        select { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 16px; -webkit-appearance: none; }
+        textarea { width: 100%; height: 100px; border-radius: 8px; border: 1px solid #ccc; padding: 12px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
+        select { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 15px; }
         
         .btn { padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--success); color: white; width: 100%; font-size: 18px; }
         .btn-danger { background: var(--danger); color: white; width: 100%; font-size: 14px; margin-bottom: 10px; }
         
-        /* HISTORY AND "RAISE UP" FIX */
-        .history-card { background: #fff; padding: 15px; border-left: 5px solid var(--accent); margin-top: 12px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; max-width: 800px; margin-left: auto; margin-right: auto; }
-        #history { padding-bottom: 400px; } /* Massive buffer to push last notes above tablet nav bars */
+        .history-card { background: #fff; padding: 15px; border-left: 5px solid var(--accent); margin-top: 10px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; max-width: 800px; margin: 10px auto; }
+        #history { padding-bottom: 300px; } /* Lift Fix */
 
         #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 90%; max-width: 600px; padding: 25px; border-radius: 12px; position: relative; max-height: 85vh; overflow-y: auto; }
         
         .client-item { padding: 20px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 18px; }
         .active-client { background: var(--accent) !important; color: white; }
-        label { font-weight: bold; color: #7f8c8d; display: block; margin-bottom: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        label { font-weight: bold; color: #7f8c8d; display: block; margin-bottom: 5px; font-size: 12px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div id="loginScreen">
     <div style="text-align: center;">
-        <h2 style="letter-spacing: 2px;">CLINIC ACCESS</h2>
-        <input type="password" id="pinField" style="padding:18px; text-align:center; font-size:28px; border-radius:12px; width: 240px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;" placeholder="PIN" inputmode="numeric" onkeydown="if(event.key==='Enter') checkPin()">
+        <h2>CLINIC ACCESS</h2>
+        <input type="password" id="pinField" style="padding:15px; text-align:center; font-size:24px; border-radius:8px; width: 220px;" placeholder="PIN" inputmode="numeric" onkeydown="if(event.key==='Enter') checkPin()">
         <br>
-        <button type="button" class="btn" style="width:240px; margin-top:20px; background: var(--accent); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onclick="checkPin()">UNLOCK SYSTEM</button>
+        <button class="btn" style="width:220px; margin-top:15px; background: var(--accent); color: white;" onclick="checkPin()">UNLOCK</button>
     </div>
 </div>
 
 <div id="modalOverlay" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <span onclick="closeModal()" style="position:absolute; top:15px; right:15px; font-size:30px; cursor:pointer;">&times;</span>
-        <h2 id="modalTitle" style="margin-top:0;">Edit Session</h2>
+        <span onclick="closeModal()" style="position:absolute; top:15px; right:15px; font-size:24px; cursor:pointer;">&times;</span>
+        <h2 id="modalTitle">Edit Session</h2>
         <div id="modalBody"></div>
         <div id="modalFooter"></div>
     </div>
@@ -67,35 +60,31 @@
 
 <div id="appContent">
     <div id="sidebar">
-        <div style="padding:15px; border-bottom:1px solid #eee; background: #fafafa;">
-            <input type="text" id="searchBar" placeholder="Search Clients..." oninput="renderList()" style="width:100%; padding:14px; margin-bottom:10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;">
-            <input type="text" id="newName" placeholder="New Client Name" style="width:100%; padding:14px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;">
-            <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:8px;" onclick="addClient()">+ ADD NEW CLIENT</button>
+        <div style="padding:15px; border-bottom:1px solid #eee;">
+            <input type="text" id="searchBar" placeholder="Search..." oninput="renderList()" style="width:100%; padding:12px; border-radius: 5px; border: 1px solid #ddd;">
+            <input type="text" id="newName" placeholder="Client Name" style="width:100%; padding:12px; margin-top:5px; border-radius: 5px; border: 1px solid #ddd;">
+            <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:5px;" onclick="addClient()">+ Add Client</button>
         </div>
         <div id="clientList"></div>
         <div class="sidebar-footer">
-            <button id="deleteBtn" class="btn btn-danger" style="display:none; width:100%;" onclick="deleteClient()">DELETE CLIENT RECORD</button>
+            <button id="deleteBtn" class="btn btn-danger" style="display:none; width:100%;" onclick="deleteClient()">DELETE CLIENT</button>
         </div>
     </div>
 
     <div id="main">
         <div id="clientView" style="display:none;">
-            <h1 id="activeTitle" style="text-align:center; color: var(--primary); margin-bottom: 25px; text-transform: uppercase; border-bottom: 2px solid var(--accent); display: inline-block; width: 100%; padding-bottom: 10px;">Client</h1>
+            <h1 id="activeTitle" style="text-align:center;">Client</h1>
             
             <div class="map-section">
                 <div class="map-grid">
                     <div class="zone-col">
-                        <label style="text-align:center;">Anterior (Front)</label>
-                        <button class="zone-btn" onclick="tapZone('Neck (Ant)')">Neck</button>
-                        <button class="zone-btn" onclick="tapZone('Pecs')">Pecs/Chest</button>
-                        <button class="zone-btn" onclick="tapZone('Deltoids (Ant)')">Shoulders</button>
-                        <button class="zone-btn" onclick="tapZone('Abs/Psoas')">Abs/Psoas</button>
+                        <button class="zone-btn" onclick="tapZone('Neck')">Neck</button>
+                        <button class="zone-btn" onclick="tapZone('Pecs')">Pecs</button>
+                        <button class="zone-btn" onclick="tapZone('Shoulders')">Shoulders</button>
                         <button class="zone-btn" onclick="tapZone('Quads')">Quads</button>
                     </div>
                     <div class="zone-col">
-                        <label style="text-align:center;">Posterior (Back)</label>
-                        <button class="zone-btn" onclick="tapZone('Upper Traps')">Upper Traps</button>
-                        <button class="zone-btn" onclick="tapZone('Rhomboids/Scap')">Rhomboids/Scap</button>
+                        <button class="zone-btn" onclick="tapZone('Traps')">Traps</button>
                         <button class="zone-btn" onclick="tapZone('Low Back')">Low Back</button>
                         <button class="zone-btn" onclick="tapZone('Glutes')">Glutes</button>
                         <button class="zone-btn" onclick="tapZone('Hamstrings')">Hamstrings</button>
@@ -104,40 +93,49 @@
             </div>
 
             <div class="soap-card">
-                <label>Treatment Modality</label>
-                <select onchange="addText('a', 'Modality: ' + this.value + '. '); this.value='';">
-                    <option value="">-- Choose Modality --</option>
-                    <option value="Relaxation / Swedish">Relaxation / Swedish</option>
-                    <option value="Therapeutic / Medical">Therapeutic / Medical</option>
-                    <option value="Deep Tissue">Deep Tissue</option>
-                    <option value="Neuromuscular">Neuromuscular</option>
-                    <option value="Injury Rehabilitation">Injury Rehabilitation</option>
+                <label>S - Subjective Findings</label>
+                <select onchange="addText('s', this.value); this.value='';">
+                    <option value="">-- Quick S-Notes --</option>
+                    <option value="Reports dull ache.">Dull Ache</option>
+                    <option value="Reports sharp pain.">Sharp Pain</option>
+                    <option value="Pain increases with movement.">Pain w/ Motion</option>
+                    <option value="Improved since last session.">Improved</option>
                 </select>
+                <textarea id="s"></textarea>
                 
-                <label>Subjective (S)</label>
-                <textarea id="s" placeholder="Client reports / Primary complaint..."></textarea>
+                <label>O - Objective Findings</label>
+                <select onchange="addText('o', this.value); this.value='';">
+                    <option value="">-- Quick O-Notes --</option>
+                    <option value="Hypertonicity noted.">Hypertonicity</option>
+                    <option value="Trigger points found.">Trigger Points</option>
+                    <option value="Reduced ROM.">Reduced ROM</option>
+                    <option value="Fascial restrictions present.">Fascial Restrict.</option>
+                </select>
+                <textarea id="o"></textarea>
                 
-                <label>Objective (O)</label>
-                <textarea id="o" placeholder="Visual / Palpation findings..."></textarea>
-                
-                <label>Assessment (A) - Tension Scale</label>
-                <select onchange="addText('a', 'Tension Level: ' + this.value + '/5. '); this.value='';">
-                    <option value="">-- Rate Tension (1-5) --</option>
+                <label>A - Assessment & Tension</label>
+                <select onchange="addText('a', 'Tension: ' + this.value + '/5. '); this.value='';">
+                    <option value="">-- Tension Scale --</option>
                     <option value="1">1 - Minimal</option>
-                    <option value="2">2 - Mild</option>
                     <option value="3">3 - Moderate</option>
-                    <option value="4">4 - High</option>
                     <option value="5">5 - Extreme</option>
                 </select>
-                <textarea id="a" placeholder="Clinical assessment summary..."></textarea>
+                <textarea id="a"></textarea>
                 
-                <label>Plan (P)</label>
-                <textarea id="p" placeholder="Self-care / Next appointment goals..."></textarea>
+                <label>P - Plan & Homework</label>
+                <select onchange="addText('p', this.value); this.value='';">
+                    <option value="">-- Quick P-Notes --</option>
+                    <option value="Suggested increase in water intake.">Hydrate</option>
+                    <option value="Recommended daily stretching.">Daily Stretch</option>
+                    <option value="Follow up in 1 week.">1 Week Follow-up</option>
+                    <option value="Focus on postural awareness.">Postural Focus</option>
+                </select>
+                <textarea id="p"></textarea>
                 
-                <button class="btn btn-save" onclick="saveNote()">SAVE SESSION DATA</button>
+                <button class="btn btn-save" onclick="saveNote()">SAVE SESSION</button>
             </div>
             
-            <h3 style="text-align:center; color: var(--primary); margin-top: 40px; text-transform: uppercase;">Session History</h3>
+            <h3 style="text-align:center;">History</h3>
             <div id="history"></div>
         </div>
     </div>
@@ -148,7 +146,7 @@
 
     function checkPin() {
         if (document.getElementById('pinField').value === '1234') initDB();
-        else { alert("Access Denied"); document.getElementById('pinField').value = ""; }
+        else alert("Wrong PIN");
     }
 
     function initDB() {
@@ -156,10 +154,7 @@
         req.onupgradeneeded = e => {
             let d = e.target.result;
             if (!d.objectStoreNames.contains("clients")) d.createObjectStore("clients", {keyPath: "id", autoIncrement: true});
-            if (!d.objectStoreNames.contains("notes")) {
-                let ns = d.createObjectStore("notes", {keyPath: "id", autoIncrement: true});
-                ns.createIndex("cId", "cId");
-            }
+            if (!d.objectStoreNames.contains("notes")) d.createObjectStore("notes", {keyPath: "id", autoIncrement: true}).createIndex("cId", "cId");
         };
         req.onsuccess = e => { 
             db = e.target.result; 
@@ -169,15 +164,8 @@
         };
     }
 
-    function tapZone(zone) { 
-        addText('s', zone + ":"); 
-        addText('o', zone + ":"); 
-    }
-
-    function addText(id, text) { 
-        const el = document.getElementById(id); 
-        if (el) el.value += (el.value ? " " : "") + text; 
-    }
+    function tapZone(zone) { addText('s', zone + ":"); addText('o', zone + ":"); }
+    function addText(id, text) { const el = document.getElementById(id); if (el) el.value += (el.value ? " " : "") + text; }
 
     function renderList() {
         const list = document.getElementById('clientList');
@@ -188,13 +176,7 @@
                 const div = document.createElement('div');
                 div.className = `client-item ${currentId === c.id ? 'active-client' : ''}`;
                 div.innerText = c.name;
-                div.onclick = () => { 
-                    currentId = c.id; 
-                    document.getElementById('clientView').style.display='block'; 
-                    document.getElementById('deleteBtn').style.display='block'; 
-                    document.getElementById('activeTitle').innerText=c.name; 
-                    renderList(); renderNotes(); 
-                };
+                div.onclick = () => { currentId = c.id; document.getElementById('clientView').style.display='block'; document.getElementById('deleteBtn').style.display='block'; document.getElementById('activeTitle').innerText=c.name; renderList(); renderNotes(); };
                 list.appendChild(div);
             });
         };
@@ -208,11 +190,7 @@
         };
         const tx = db.transaction("notes", "readwrite");
         tx.objectStore("notes").add(n);
-        tx.oncomplete = () => { 
-            ['s','o','a','p'].forEach(i => document.getElementById(i).value = ""); 
-            renderNotes(); 
-            alert("Entry Secured"); 
-        };
+        tx.oncomplete = () => { ['s','o','a','p'].forEach(i => document.getElementById(i).value = ""); renderNotes(); alert("Saved"); };
     }
 
     function renderNotes() {
@@ -223,8 +201,8 @@
             e.target.result.sort((a, b) => b.id - a.id).forEach(n => {
                 const noteData = encodeURIComponent(JSON.stringify(n));
                 h.innerHTML += `<div class="history-card" onclick="openModal('${noteData}')">
-                    <strong style="color: var(--accent);">${n.date}</strong><br>
-                    <small style="color: #666;">${n.s.substring(0, 60)}...</small>
+                    <strong>${n.date}</strong><br>
+                    <small>${n.s.substring(0, 50)}...</small>
                 </div>`;
             });
         };
@@ -233,15 +211,13 @@
     function openModal(noteJson) {
         const n = JSON.parse(decodeURIComponent(noteJson));
         editingNoteId = n.id;
-        document.getElementById('modalTitle').innerText = `Update: ${n.date}`;
+        document.getElementById('modalTitle').innerText = `Edit: ${n.date}`;
         document.getElementById('modalBody').innerHTML = `
-            <label>S</label><textarea id="editS">${n.s}</textarea>
-            <label>O</label><textarea id="editO">${n.o}</textarea>
-            <label>A</label><textarea id="editA">${n.a}</textarea>
-            <label>P</label><textarea id="editP">${n.p}</textarea>`;
+            <textarea id="editS">${n.s}</textarea><textarea id="editO">${n.o}</textarea>
+            <textarea id="editA">${n.a}</textarea><textarea id="editP">${n.p}</textarea>`;
         document.getElementById('modalFooter').innerHTML = `
-            <button class="btn btn-save" onclick="updateNote()">APPLY CHANGES</button>
-            <button class="btn btn-danger" style="margin-top:10px; width:100%;" onclick="deleteNote(${n.id})">DELETE THIS ENTRY</button>`;
+            <button class="btn btn-save" onclick="updateNote()">SAVE</button>
+            <button class="btn btn-danger" style="margin-top:10px; width:100%;" onclick="deleteNote(${n.id})">DELETE</button>`;
         document.getElementById('modalOverlay').style.display = 'flex';
     }
 
@@ -260,7 +236,7 @@
     }
 
     function deleteNote(id) {
-        if(confirm("Permanently erase this note?")) {
+        if(confirm("Delete note?")) {
             const tx = db.transaction("notes", "readwrite");
             tx.objectStore("notes").delete(id);
             tx.oncomplete = () => { closeModal(); renderNotes(); };
@@ -268,7 +244,6 @@
     }
 
     function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
-    
     function addClient() {
         const name = document.getElementById('newName').value;
         if (!name) return;
@@ -276,9 +251,8 @@
         tx.objectStore("clients").add({name});
         tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
     }
-    
     function deleteClient() {
-        if (!currentId || !confirm("Delete client and all session history?")) return;
+        if (!currentId || !confirm("Delete client?")) return;
         const tx = db.transaction(["clients", "notes"], "readwrite");
         tx.objectStore("clients").delete(currentId);
         tx.oncomplete = () => { currentId = null; document.getElementById('clientView').style.display = 'none'; renderList(); };
