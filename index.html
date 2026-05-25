@@ -43,6 +43,9 @@
         .client-item { padding: 18px; border-bottom: 1px solid #eee; cursor: pointer; }
         .active-client { background: var(--accent) !important; color: white; }
         label { font-weight: bold; color: #7f8c8d; display: block; margin-bottom: 5px; font-size: 11px; text-transform: uppercase; }
+        
+        /* Direct Inline Edit Styling */
+        #editContainer { display: none; margin-top: 5px; gap: 5px; }
     </style>
 </head>
 <body>
@@ -71,6 +74,7 @@
             <input type="text" id="searchBar" placeholder="Search..." oninput="renderList()" style="width:100%; padding:12px; border-radius: 5px; border: 1px solid #ddd;">
             <input type="text" id="newName" placeholder="Client Name" style="width:100%; padding:12px; margin-top:5px; border-radius: 5px; border: 1px solid #ddd;">
             <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:5px;" onclick="addClient()">+ ADD CLIENT</button>
+            <div id="clientErrorMsg" style="color: var(--danger); font-size: 12px; margin-top: 5px; display: none; font-weight: bold;">Please type a name first.</div>
         </div>
         <div id="clientList"></div>
         <div class="sidebar-footer">
@@ -82,7 +86,12 @@
         <div id="clientView" style="display:none;">
             <div style="text-align:center; margin-bottom: 20px;">
                 <h1 id="activeTitle" style="display:inline-block; margin:0;">Client</h1>
-                <button class="btn btn-edit" onclick="editClientName()">EDIT NAME</button>
+                <button class="btn btn-edit" onclick="toggleEditMode()">EDIT NAME</button>
+                
+                <div id="editContainer">
+                    <input type="text" id="editNameField" style="padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; width: 60%; margin-top: 10px;">
+                    <button class="btn" style="background: var(--success); color: white; padding: 10px;" onclick="saveClientNameChange()">SAVE</button>
+                </div>
             </div>
             
             <div class="map-section">
@@ -164,7 +173,7 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             const blob = new Blob([`
-                const cacheName = 'knead-clay-v1';
+                const cacheName = 'knead-clay-v2';
                 self.addEventListener('install', e => {
                     e.waitUntil(caches.open(cacheName).then(cache => cache.addAll(['./'])));
                 });
@@ -222,6 +231,7 @@
                     document.getElementById('clientView').style.display='block'; 
                     document.getElementById('deleteBtn').style.display='block'; 
                     document.getElementById('activeTitle').innerText=c.name; 
+                    document.getElementById('editContainer').style.display = 'none';
                     renderList(); renderNotes(); 
                 };
                 list.appendChild(div);
@@ -229,9 +239,20 @@
         };
     }
 
-    function editClientName() {
+    function toggleEditMode() {
+        const container = document.getElementById('editContainer');
         const currentName = document.getElementById('activeTitle').innerText;
-        const newName = prompt("Enter new name:", currentName);
+        if (container.style.display === 'none' || container.style.display === '') {
+            container.style.display = 'flex';
+            document.getElementById('editNameField').value = currentName;
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    function saveClientNameChange() {
+        const newName = document.getElementById('editNameField').value.trim();
+        const currentName = document.getElementById('activeTitle').innerText;
         if (newName && newName !== currentName) {
             const tx = db.transaction("clients", "readwrite");
             const store = tx.objectStore("clients");
@@ -242,6 +263,7 @@
             };
             tx.oncomplete = () => {
                 document.getElementById('activeTitle').innerText = newName;
+                document.getElementById('editContainer').style.display = 'none';
                 renderList();
             };
         }
@@ -280,70 +302,4 @@
         document.getElementById('modalTitle').innerText = `Session: ${n.date}`;
         document.getElementById('modalBody').innerHTML = `
             <label>S</label><textarea id="editS">${n.s || ""}</textarea>
-            <label>O</label><textarea id="editO">${n.o || ""}</textarea>
-            <label>A</label><textarea id="editA">${n.a || ""}</textarea>
-            <label>P</label><textarea id="editP">${n.p || ""}</textarea>`;
-        document.getElementById('modalFooter').innerHTML = `
-            <button class="btn btn-save" onclick="updateNote()">APPLY CHANGES</button>
-            <button class="btn btn-danger" style="margin-top:10px; width:100%;" onclick="deleteNote(${n.id})">DELETE ENTRY</button>`;
-        document.getElementById('modalOverlay').style.display = 'flex';
-    }
-
-    function updateNote() {
-        const tx = db.transaction("notes", "readwrite");
-        const store = tx.objectStore("notes");
-        store.get(editingNoteId).onsuccess = e => {
-            const data = e.target.result;
-            data.s = document.getElementById('editS').value;
-            data.o = document.getElementById('editO').value;
-            data.id = editingNoteId;
-            store.put(data);
-        };
-        tx.oncomplete = () => { closeModal(); renderNotes(); };
-    }
-
-    function deleteNote(id) {
-        if(confirm("Erase session history?")) {
-            const tx = db.transaction("notes", "readwrite");
-            tx.objectStore("notes").delete(id);
-            tx.oncomplete = () => { closeModal(); renderNotes(); };
-        }
-    }
-
-    function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
-
-    function addClient() {
-        const nameInput = document.getElementById('newName');
-        const name = nameInput.value.trim();
-        if (!name) { alert("Please enter a client name."); return; }
-        
-        if (!db) { alert("Database not ready. Refresh and unlock again."); return; }
-
-        const tx = db.transaction("clients", "readwrite");
-        const store = tx.objectStore("clients");
-        
-        // Explicitly format data structure for IndexedDB auto-increment
-        const clientRecord = { name: name };
-        
-        const request = store.add(clientRecord);
-        
-        request.onsuccess = () => {
-            nameInput.value = "";
-            renderList();
-        };
-
-        request.onerror = (e) => {
-            console.error("Database error adding client:", e.target.error);
-            alert("Error saving client to database.");
-        };
-    }
-
-    function deleteClient() {
-        if (!currentId || !confirm("Delete client?")) return;
-        const tx = db.transaction(["clients", "notes"], "readwrite");
-        tx.objectStore("clients").delete(currentId);
-        tx.oncomplete = () => { currentId = null; document.getElementById('clientView').style.display = 'none'; renderList(); };
-    }
-</script>
-</body>
-</html>
+            <label>O</label><textarea id="editO">${n.
