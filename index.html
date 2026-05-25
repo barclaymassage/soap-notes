@@ -203,11 +203,17 @@
     function addText(id, text) { const el = document.getElementById(id); if (el) el.value += (el.value ? " " : "") + text; }
 
     function renderList() {
+        if (!db) return;
         const list = document.getElementById('clientList');
         const search = document.getElementById('searchBar').value.toLowerCase();
         list.innerHTML = "";
-        db.transaction("clients").objectStore("clients").getAll().onsuccess = e => {
-            e.target.result.filter(c => c.name.toLowerCase().includes(search)).forEach(c => {
+        
+        const tx = db.transaction("clients", "readonly");
+        const store = tx.objectStore("clients");
+        
+        store.getAll().onsuccess = e => {
+            const clients = e.target.result || [];
+            clients.filter(c => c.name && c.name.toLowerCase().includes(search)).forEach(c => {
                 const div = document.createElement('div');
                 div.className = `client-item ${currentId === c.id ? 'active-client' : ''}`;
                 div.innerText = c.name;
@@ -242,6 +248,7 @@
     }
 
     function saveNote() {
+        if (!currentId) { alert("Select a client first"); return; }
         const n = { 
             cId: currentId, date: new Date().toLocaleDateString(), 
             s: document.getElementById('s').value, o: document.getElementById('o').value, 
@@ -261,7 +268,7 @@
                 const noteData = encodeURIComponent(JSON.stringify(n));
                 h.innerHTML += `<div class="history-card" onclick="openModal('${noteData}')">
                     <strong>${n.date}</strong><br>
-                    <small>${n.s.substring(0, 50)}...</small>
+                    <small>${n.s ? n.s.substring(0, 50) : ""}...</small>
                 </div>`;
             });
         };
@@ -272,10 +279,10 @@
         editingNoteId = n.id;
         document.getElementById('modalTitle').innerText = `Session: ${n.date}`;
         document.getElementById('modalBody').innerHTML = `
-            <label>S</label><textarea id="editS">${n.s}</textarea>
-            <label>O</label><textarea id="editO">${n.o}</textarea>
-            <label>A</label><textarea id="editA">${n.a}</textarea>
-            <label>P</label><textarea id="editP">${n.p}</textarea>`;
+            <label>S</label><textarea id="editS">${n.s || ""}</textarea>
+            <label>O</label><textarea id="editO">${n.o || ""}</textarea>
+            <label>A</label><textarea id="editA">${n.a || ""}</textarea>
+            <label>P</label><textarea id="editP">${n.p || ""}</textarea>`;
         document.getElementById('modalFooter').innerHTML = `
             <button class="btn btn-save" onclick="updateNote()">APPLY CHANGES</button>
             <button class="btn btn-danger" style="margin-top:10px; width:100%;" onclick="deleteNote(${n.id})">DELETE ENTRY</button>`;
@@ -289,8 +296,7 @@
             const data = e.target.result;
             data.s = document.getElementById('editS').value;
             data.o = document.getElementById('editO').value;
-            data.a = document.getElementById('editA').value;
-            data.p = document.getElementById('editP').value;
+            data.id = editingNoteId;
             store.put(data);
         };
         tx.oncomplete = () => { closeModal(); renderNotes(); };
@@ -307,11 +313,29 @@
     function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
     function addClient() {
-        const name = document.getElementById('newName').value;
-        if (!name) return;
+        const nameInput = document.getElementById('newName');
+        const name = nameInput.value.trim();
+        if (!name) { alert("Please enter a client name."); return; }
+        
+        if (!db) { alert("Database not ready. Refresh and unlock again."); return; }
+
         const tx = db.transaction("clients", "readwrite");
-        tx.objectStore("clients").add({name});
-        tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
+        const store = tx.objectStore("clients");
+        
+        // Explicitly format data structure for IndexedDB auto-increment
+        const clientRecord = { name: name };
+        
+        const request = store.add(clientRecord);
+        
+        request.onsuccess = () => {
+            nameInput.value = "";
+            renderList();
+        };
+
+        request.onerror = (e) => {
+            console.error("Database error adding client:", e.target.error);
+            alert("Error saving client to database.");
+        };
     }
 
     function deleteClient() {
