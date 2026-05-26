@@ -157,30 +157,15 @@
 <script>
     let db = null, currentId = null, editingNoteId = null;
 
-    // Self-contained embedded Service Worker script for 100% bulletproof offline mode
+    // Registers the service worker explicitly inside your specific GitHub folder path
     if ('serviceWorker' in navigator) {
-        const swCode = `
-            const CACHE_NAME = 'knead-clay-offline-v2';
-            const ASSETS = [window.location.pathname, './', 'intake.html'];
-            self.addEventListener('install', e => {
-                e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
-            });
-            self.addEventListener('activate', e => {
-                e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))).then(() => self.clients.claim()));
-            });
-            self.addEventListener('fetch', e => {
-                e.respondWith(caches.match(e.request).then(res => res || fetch(e.request).catch(() => {
-                    if (e.request.mode === 'navigate') return caches.match(window.location.pathname) || caches.match('intake.html');
-                })));
-            });
-        `;
-        const blob = new Blob([swCode], { type: 'text/javascript' });
-        navigator.serviceWorker.register(URL.createObjectURL(blob), { scope: './' })
-        .then(() => console.log("Offline Engine Loaded."))
-        .catch(err => console.error("Offline Engine failed:", err));
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/massageintake/sw.js', { scope: '/massageintake/' })
+            .then(reg => console.log("Offline cache successfully scoped:", reg.scope))
+            .catch(err => console.error("Offline registration failed:", err));
+        });
     }
 
-    // Wake up database instantly on load
     window.addEventListener('DOMContentLoaded', () => { initDB(); });
 
     function checkPin() {
@@ -206,7 +191,7 @@
             if (document.getElementById('loginScreen').style.display === 'none') renderList();
             if (callback) callback();
         };
-        req.onerror = e => { console.error("DB offline lock fail."); };
+        req.onerror = e => { console.error("Database initialization failed."); };
     }
 
     function tapZone(zone) { addText('s', zone + ":"); addText('o', zone + ":"); }
