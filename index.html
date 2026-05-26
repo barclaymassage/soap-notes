@@ -62,7 +62,7 @@
         <div style="padding:15px; border-bottom:1px solid #eee;">
             <input type="text" id="searchBar" placeholder="Search..." oninput="renderList()" style="width:100%; padding:12px; border-radius: 5px; border: 1px solid #ddd;">
             <input type="text" id="newName" placeholder="Client Name" style="width:100%; padding:12px; margin-top:5px; border-radius: 5px; border: 1px solid #ddd;">
-            <button class="btn" style="background:var(--accent); color:white; width:100%; margin-top:5px;" onclick="addClient()">+ ADD CLIENT</button>
+            <button class="btn" id="addClientBtn" style="background:var(--accent); color:white; width:100%; margin-top:5px;" onclick="addClient()">+ ADD CLIENT</button>
         </div>
         <div id="clientList"></div>
         <div class="sidebar-footer">
@@ -157,12 +157,23 @@
 <script>
     let db = null, currentId = null, editingNoteId = null;
 
+    // IMMEDIATELY initialize database on load so it works 100% offline
+    window.addEventListener('DOMContentLoaded', () => {
+        initDB();
+    });
+
     function checkPin() {
-        if (document.getElementById('pinField').value === '1234') initDB();
-        else { alert("Wrong PIN"); document.getElementById('pinField').value = ""; }
+        if (document.getElementById('pinField').value === '1234') {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'flex';
+            if (db) renderList();
+        } else { 
+            alert("Wrong PIN"); 
+            document.getElementById('pinField').value = ""; 
+        }
     }
 
-    function initDB() {
+    function initDB(callback) {
         const req = indexedDB.open("ClinicDB_Final", 3);
         req.onupgradeneeded = e => {
             let d = e.target.result;
@@ -171,11 +182,13 @@
         };
         req.onsuccess = e => { 
             db = e.target.result; 
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appContent').style.display = 'flex';
-            renderList(); 
+            // If the login screen is already gone, render immediately
+            if (document.getElementById('loginScreen').style.display === 'none') {
+                renderList();
+            }
+            if (callback) callback();
         };
-        req.onerror = e => { alert("Database failed to initialize."); };
+        req.onerror = e => { console.error("Database offline init failed."); };
     }
 
     function tapZone(zone) { addText('s', zone + ":"); addText('o', zone + ":"); }
@@ -292,12 +305,29 @@
     function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
     function addClient() {
-        if (!db) { console.log("Re-initing DB"); initDB(); alert("Database was asleep. Try clicking in 1 second."); return; }
         const name = document.getElementById('newName').value.trim();
         if (!name) return;
-        const tx = db.transaction("clients", "readwrite");
-        tx.objectStore("clients").add({name: name});
-        tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
+
+        if (!db) {
+            initDB(() => {
+                const tx = db.transaction("clients", "readwrite");
+                tx.objectStore("clients").add({name: name});
+                tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
+            });
+            return;
+        }
+
+        try {
+            const tx = db.transaction("clients", "readwrite");
+            tx.objectStore("clients").add({name: name});
+            tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
+        } catch(e) {
+            initDB(() => {
+                const tx = db.transaction("clients", "readwrite");
+                tx.objectStore("clients").add({name: name});
+                tx.oncomplete = () => { document.getElementById('newName').value = ""; renderList(); };
+            });
+        }
     }
 
     function deleteClient() {
@@ -311,6 +341,7 @@
         tx.oncomplete = () => { currentId = null; document.getElementById('clientView').style.display = 'none'; renderList(); };
     }
 
+    // Export and Import functions remain local-only
     function exportDatabase() {
         if (!db) return;
         const backupData = { clients: [], notes: [] };
