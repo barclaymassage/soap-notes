@@ -157,10 +157,31 @@
 <script>
     let db = null, currentId = null, editingNoteId = null;
 
-    // IMMEDIATELY initialize database on load so it works 100% offline
-    window.addEventListener('DOMContentLoaded', () => {
-        initDB();
-    });
+    // Self-contained embedded Service Worker script for 100% bulletproof offline mode
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            const CACHE_NAME = 'knead-clay-offline-v2';
+            const ASSETS = [window.location.pathname, './', 'intake.html'];
+            self.addEventListener('install', e => {
+                e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+            });
+            self.addEventListener('activate', e => {
+                e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))).then(() => self.clients.claim()));
+            });
+            self.addEventListener('fetch', e => {
+                e.respondWith(caches.match(e.request).then(res => res || fetch(e.request).catch(() => {
+                    if (e.request.mode === 'navigate') return caches.match(window.location.pathname) || caches.match('intake.html');
+                })));
+            });
+        `;
+        const blob = new Blob([swCode], { type: 'text/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(blob), { scope: './' })
+        .then(() => console.log("Offline Engine Loaded."))
+        .catch(err => console.error("Offline Engine failed:", err));
+    }
+
+    // Wake up database instantly on load
+    window.addEventListener('DOMContentLoaded', () => { initDB(); });
 
     function checkPin() {
         if (document.getElementById('pinField').value === '1234') {
@@ -182,13 +203,10 @@
         };
         req.onsuccess = e => { 
             db = e.target.result; 
-            // If the login screen is already gone, render immediately
-            if (document.getElementById('loginScreen').style.display === 'none') {
-                renderList();
-            }
+            if (document.getElementById('loginScreen').style.display === 'none') renderList();
             if (callback) callback();
         };
-        req.onerror = e => { console.error("Database offline init failed."); };
+        req.onerror = e => { console.error("DB offline lock fail."); };
     }
 
     function tapZone(zone) { addText('s', zone + ":"); addText('o', zone + ":"); }
@@ -307,7 +325,6 @@
     function addClient() {
         const name = document.getElementById('newName').value.trim();
         if (!name) return;
-
         if (!db) {
             initDB(() => {
                 const tx = db.transaction("clients", "readwrite");
@@ -316,7 +333,6 @@
             });
             return;
         }
-
         try {
             const tx = db.transaction("clients", "readwrite");
             tx.objectStore("clients").add({name: name});
@@ -341,7 +357,6 @@
         tx.oncomplete = () => { currentId = null; document.getElementById('clientView').style.display = 'none'; renderList(); };
     }
 
-    // Export and Import functions remain local-only
     function exportDatabase() {
         if (!db) return;
         const backupData = { clients: [], notes: [] };
